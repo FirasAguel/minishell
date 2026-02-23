@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <readline/readline.h>
 
 int main(int argc, char *argv[])
@@ -14,6 +15,9 @@ int main(int argc, char *argv[])
   printf("$ ");
 
   line = readline(NULL);
+
+  if (!strcmp(line, "exit"))
+    return (free(line), 0);
 
   printf("%s: command not found\n", line);
 
