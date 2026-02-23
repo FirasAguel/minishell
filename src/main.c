@@ -36,7 +36,18 @@ int main(int argc, char *argv[])
     }
     printf("\n");
   }
-  else
+  else if (!strcmp(buff, "type"))
+  {
+    char **arr = ft_split(line, ' ');
+    for(int i = 1; arr[i]; i++)
+    {
+      if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit"))
+        printf("%s is a builtin\n", arr[i]);
+      else 
+        printf("type: Could not find '%s'\n", arr[i]);
+    }
+  }
+  else 
   printf("%s: command not found\n", line);
 
   free(line);
