@@ -42,9 +42,9 @@ int main(int argc, char *argv[])
     for(int i = 1; arr[i]; i++)
     {
       if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit"))
-        printf("%s is a builtin\n", arr[i]);
+        printf("%s is a shell builtin\n", arr[i]);
       else 
-        printf("type: Could not find '%s'\n", arr[i]);
+        printf("%s: not found\n", arr[i]);
     }
   }
   else 
