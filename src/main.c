@@ -3,6 +3,8 @@
 #include <string.h>
 #include <readline/readline.h>
 
+char	**ft_split(char const *s, char c);
+
 int main(int argc, char *argv[])
 {
   char *line;
@@ -19,6 +21,22 @@ int main(int argc, char *argv[])
   if (!strcmp(line, "exit"))
     return (free(line), 0);
 
+  char buff[5];
+  memcpy(buff, line, 4);
+  buff[4] = '\0';
+  if (!strcmp(buff, "echo"))
+  {
+    char **arr = ft_split(line, ' ');
+    //printf("%s\n", line + 4);
+    if (arr[1])
+    {
+      printf("%s", arr[1]);
+      for(int i = 2; arr[i]; i++)
+        printf(" %s", arr[i]);
+    }
+    printf("\n");
+  }
+  else
   printf("%s: command not found\n", line);
 
   free(line);
