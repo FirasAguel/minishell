@@ -106,16 +106,31 @@ void exec_cmd(char *cmd_str, char **envp)
   }
   execve(cmd_path, cmd_str_split, envp);
   free_split(cmd_str_split);
-  perror("execve failed:");
+  perror("execve");
   free(cmd_path);
   exit(EXIT_FAILURE);
 }
+
+char *get_home_dir(char *envp[])
+{
+  int i;
+
+  i = 0;
+  while (envp[i] && ft_strncmp(envp[i], "HOME=", 5))
+    i++;
+  if (!envp[i])
+    return (ft_puterr("CRITICAL: HOME not found"), NULL);
+  return (strdup(envp[i] + 5));
+}
+
 #include <limits.h>
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
 
   // printf("path_max %d\n", PATH_MAX);
+  // printf("home dir %s\n", get_home_dir(envp));
+  // TODO: replace strncmps with split[0] once tokenization is implemented
   while (1)
   {
     // Flush after every printf
@@ -146,7 +161,7 @@ int main(int argc, char *argv[], char *envp[])
       char **arr = ft_split(line, ' ');
       for (int i = 1; arr[i]; i++)
       {
-        if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit") || !strcmp(arr[i], "pwd"))
+        if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit") || !strcmp(arr[i], "pwd") || !strcmp(arr[i], "cd"))
           printf("%s is a shell builtin\n", arr[i]);
         else
         {
@@ -167,10 +182,22 @@ int main(int argc, char *argv[], char *envp[])
     else if (!ft_strncmp(line, "cd", 2))
     {
       // char *buff = malloc(PATH_MAX);
+      if (strlen(line) == 2 || !ft_strncmp(line, "cd ~", 4) && strlen(line) == 4)
+      {
+        char *home = get_home_dir(envp);
+        if (!home)
+          ft_puterr("home dir fail");
+        else
+        {
+          chdir(home);
+          free(home);
+        }
+      }
+      else
       if (chdir(line + 3))
         printf("cd: %s: No such file or directory\n", line + 3);
     }
-    else
+    else if(strlen(line))
     {
       pid_t pid = fork();
       if (pid < 0) // Error handling
