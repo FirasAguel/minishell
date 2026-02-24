@@ -164,6 +164,12 @@ int main(int argc, char *argv[], char *envp[])
       printf("%s\n", getcwd(buff, PATH_MAX));
       free(buff);
     }
+    else if (!ft_strncmp(line, "cd", 2))
+    {
+      // char *buff = malloc(PATH_MAX);
+      if (chdir(line + 3))
+        printf("cd: %s: No such file or directory\n", line + 3);
+    }
     else
     {
       pid_t pid = fork();
