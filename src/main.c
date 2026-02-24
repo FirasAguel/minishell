@@ -128,6 +128,7 @@ int main(int argc, char *argv[], char *envp[])
     if (!strcmp(line, "exit"))
       return (free(line), 0);
 
+    // using strncmp is bad because it ignores what comes directly after the command. e.g. echonxyz arg1 arg2 will behave as echo arg1 arg2
     if (!ft_strncmp(line, "echo", 4))
     {
       char **arr = ft_split(line, ' ');
@@ -145,7 +146,7 @@ int main(int argc, char *argv[], char *envp[])
       char **arr = ft_split(line, ' ');
       for (int i = 1; arr[i]; i++)
       {
-        if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit"))
+        if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit") || !strcmp(arr[i], "pwd"))
           printf("%s is a shell builtin\n", arr[i]);
         else
         {
