@@ -110,11 +110,12 @@ void exec_cmd(char *cmd_str, char **envp)
   free(cmd_path);
   exit(EXIT_FAILURE);
 }
-
+#include<limits.h>
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
 
+  printf("path_max %d\n", PATH_MAX);
   while (1)
   {
     // Flush after every printf
@@ -155,6 +156,12 @@ int main(int argc, char *argv[], char *envp[])
             printf("%s is %s\n", arr[i], cmd_path);
         }
       }
+    }
+    else if (!ft_strncmp(line, "pwd", 3))
+    {
+      char *buff = malloc(PATH_MAX);
+      printf("%s\n", getcwd(buff, PATH_MAX));
+      free(buff);
     }
     else
     {
