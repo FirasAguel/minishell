@@ -86,6 +86,31 @@ char *resolve_path(const char *cmd, char *envp[])
   return (cmd_path);
 }
 
+void exec_cmd(char *cmd_str, char **envp)
+{
+  char **cmd_str_split;
+  char *cmd_path;
+
+  cmd_str_split = ft_split(cmd_str, ' ');
+  if (!cmd_str_split || !cmd_str_split[0])
+  {
+    ft_puterr("empty command\n");
+    exit(CMD_NOT_FOUND);
+  }
+  cmd_path = resolve_path((const char *)cmd_str_split[0], envp);
+  if (!cmd_path)
+  {
+    printf("%s: command not found\n", cmd_str_split[0]);
+    free_split(cmd_str_split);
+    exit(CMD_NOT_FOUND);
+  }
+  execve(cmd_path, cmd_str_split, envp);
+  free_split(cmd_str_split);
+  perror("execve failed:");
+  free(cmd_path);
+  exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
@@ -132,8 +157,15 @@ int main(int argc, char *argv[], char *envp[])
       }
     }
     else
-      printf("%s: command not found\n", line);
-
+    {
+      pid_t pid = fork();
+      if (pid < 0) // Error handling
+        return (/*ft_puterr("Fork 1) failed\n"),*/ EXIT_FAILURE);
+      else if (pid == 0)
+        exec_cmd(line, envp);
+      else
+        waitpid(pid, NULL, 0); // parent waits for child to finish
+    }
     free(line);
   }
 
