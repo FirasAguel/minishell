@@ -86,12 +86,12 @@ char *resolve_path(const char *cmd, char *envp[])
   return (cmd_path);
 }
 
-void exec_cmd(char *cmd_str, char **envp)
+void exec_cmd(char **cmd_str_split, char **envp)
 {
-  char **cmd_str_split;
+  // char **cmd_str_split;
   char *cmd_path;
 
-  cmd_str_split = ft_split(cmd_str, ' ');
+  // cmd_str_split = ft_split(cmd_str, ' ');
   if (!cmd_str_split || !cmd_str_split[0])
   {
     ft_puterr("empty command\n");
@@ -274,7 +274,7 @@ int main(int argc, char *argv[], char *envp[])
       }
       printf("\n");
     }
-    else if (!ft_strcmp(tokens[0], "type"))
+    else if (!strcmp(tokens[0], "type"))
     {
       for (int i = 1; tokens[i]; i++)
       {
@@ -290,16 +290,16 @@ int main(int argc, char *argv[], char *envp[])
         }
       }
     }
-    else if (!ft_strcmp(tokens[0], "pwd"))
+    else if (!strcmp(tokens[0], "pwd"))
     {
       char *buff = malloc(PATH_MAX);
       printf("%s\n", getcwd(buff, PATH_MAX));
       free(buff);
     }
-    else if (!ft_strcmp(tokens[0], "cd"))
+    else if (!strcmp(tokens[0], "cd"))
     {
       // char *buff = malloc(PATH_MAX);
-      if (!tokens[1] || !ft_strcmp(tokens[1], "~"))
+      if (!tokens[1] || !strcmp(tokens[1], "~"))
       {
         char *home = get_home_dir(envp);
         if (!home)
