@@ -164,15 +164,26 @@ int is_delimiter(char c, t_lexer *lexer)
   return (0);
 }
 
+static int is_escapable_in_double_quote(char c)
+{
+  return (c == '"' || c == '\\' || c == '$' || c == '`' || c == '\n');
+}
+
 void append_to_token(char c, t_lexer *lexer)
 {
   lexer->token_started = 1;
-  if (lexer->mode == MODE_NORMAL && lexer->escape_flag)
+  if (lexer->escape_flag)
   {
-    lexer->buff[lexer->buff_i++] = c;
+    if (lexer->mode == MODE_NORMAL || (lexer->mode == MODE_DOUBLE_QUOTE && is_escapable_in_double_quote(c)))
+    {
+      lexer->buff[lexer->buff_i++] = c;
+      lexer->escape_flag = 0;
+    }
+    else
+      lexer->buff[lexer->buff_i++] = '\\';
     lexer->escape_flag = 0;
   }
-  else if (lexer->mode == MODE_NORMAL && c == '\\')
+  else if ((lexer->mode == MODE_NORMAL || lexer->mode == MODE_DOUBLE_QUOTE) && c == '\\')
     lexer->escape_flag = 1;
   else
     lexer->buff[lexer->buff_i++] = c;
