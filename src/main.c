@@ -88,10 +88,8 @@ char *resolve_path(const char *cmd, char *envp[])
 
 void exec_cmd(char **cmd_str_split, char **envp)
 {
-  // char **cmd_str_split;
   char *cmd_path;
 
-  // cmd_str_split = ft_split(cmd_str, ' ');
   if (!cmd_str_split || !cmd_str_split[0])
   {
     ft_puterr("empty command\n");
@@ -153,23 +151,10 @@ int update_mode(char c, enum e_lexing_modes *mode)
   return (0);
 }
 
-// int should_append_to_token(char c, enum e_lexing_modes mode)
-// {
-//   if (mode == MODE_SINGLE_QUOTE) // single quote chars shouldn't reach this func call
-//     return (1);
-//   if (mode == MODE_NORMAL)
-//   {
-//     if (c == ' ') // TODO: || c == '"' || c == '|')
-//       return (0);
-//     else
-//       return (1);
-//   }
-// }
-
 int is_delimiter(char c, enum e_lexing_modes mode)
 {
   if (mode == MODE_NORMAL)
-    if (c == ' ') // TODO: || c == '"' || c == '|' || c == '|')
+    if (c == ' ') // TODO: || c == '|' || c == '<')
       return (1);
   return (0);
 }
@@ -230,7 +215,6 @@ char **lex(char *line)
   tokens[token_count] = NULL;
   return (tokens);
 }
-// i = skip_space(line, i);        // same as if (line[i] && line[i] == ' '){i++;continue;}
 
 #include <limits.h>
 int main(int argc, char *argv[], char *envp[])
@@ -250,7 +234,6 @@ int main(int argc, char *argv[], char *envp[])
   //     printf("%s\n", tokens[i]);
   // }
 
-  // TODO: replace strncmps with split[0] once tokenization is implemented
   while (1)
   {
     // Flush after every printf
@@ -270,11 +253,8 @@ int main(int argc, char *argv[], char *envp[])
     if (!strcmp(tokens[0], "exit"))
       return (free(line), 0);
 
-    // using strncmp is bad because it ignores what comes directly after the command. e.g. echonxyz arg1 arg2 will behave as echo arg1 arg2
     if (!ft_strncmp(tokens[0], "echo", 4))
     {
-      // char **arr = ft_split(line, ' ');
-      // printf("%s\n", line + 4);
       if (tokens[1])
       {
         printf("%s", tokens[1]);
@@ -307,7 +287,6 @@ int main(int argc, char *argv[], char *envp[])
     }
     else if (!strcmp(tokens[0], "cd"))
     {
-      // char *buff = malloc(PATH_MAX);
       if (!tokens[1] || !strcmp(tokens[1], "~"))
       {
         char *home = get_home_dir(envp);
