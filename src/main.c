@@ -159,61 +159,70 @@ int is_delimiter(char c, enum e_lexing_modes mode)
   return (0);
 }
 
-void flush_token(char buff[1024], int *buff_i, char ***tokens, int *token_count)
-{
-  buff[*buff_i] = '\0';
-  (*tokens)[(*token_count)++] = strdup(buff);
-  *buff_i = 0;
-}
-
-// typedef struct s_lexer
-// {
-//   enum e_lexing_modes mode;
-// }	t_lexer;
-
-
-char **lex(char *line)
+typedef struct s_lexer
 {
   enum e_lexing_modes mode;
-  int i;
-
   // TODO: use a linked list instead
-  char **tokens = (char **)malloc(100 * sizeof(char *));
+  char **tokens;
   int token_count;
-
   // TODO use append or ft_realloc
   char buff[1024];
   int buff_i;
-
   int token_started;
+}	t_lexer;
 
-  token_count = 0;
+void append_to_token(char c, t_lexer *lexer)
+{
+  lexer->token_started = 1;
+  lexer->buff[lexer->buff_i++] = c;
+}
+
+void flush_token(t_lexer *lexer)
+{
+  lexer->buff[lexer->buff_i] = '\0';
+  lexer->tokens[lexer->token_count++] = strdup(lexer->buff);
+  lexer->buff_i = 0;
+  lexer->token_started = 0;
+}
+
+int init_lexer(t_lexer **lexer)
+{
+  *lexer = (t_lexer *)malloc(sizeof(t_lexer));
+  if (!*lexer)
+    return (ft_puterr("(*lexer) malloc failed\n"), EXIT_FAILURE);
+  (*lexer)->tokens = (char **)malloc(100 * sizeof(char *));
+  if (!(*lexer)->tokens)
+    return (ft_puterr("tokens malloc failed\n"), EXIT_FAILURE);
+  (*lexer)->token_count = 0;
+  (*lexer)->mode = MODE_NORMAL;
+  (*lexer)->buff_i = 0;
+  return (EXIT_SUCCESS);
+}
+
+char **lex(char *line)
+{
+  t_lexer *lexer;
+  int i;
+
+  if (init_lexer(&lexer) != EXIT_SUCCESS)
+    return (NULL);
   i = 0;
-  mode = MODE_NORMAL;
-  buff_i = 0;
-
   while (line[i])
   {
-    if (update_mode(line[i], &mode))
-      token_started = 1;
-    else if (!is_delimiter(line[i], mode))
-    {
-      token_started = 1;
-      buff[buff_i++] = line[i]; // append_to_token
-    }
-    else if (token_started)
-    {
-      flush_token(buff, &buff_i, &tokens, &token_count);
-      token_started = 0;
-    }
+    if (update_mode(line[i], &(lexer->mode)))
+      lexer->token_started = 1;
+    else if (!is_delimiter(line[i], lexer->mode))
+      append_to_token(line[i], lexer);
+    else if (lexer->token_started)
+      flush_token(lexer);
     i++;
   }
-  if (mode != MODE_NORMAL)
+  if (lexer->mode != MODE_NORMAL)
     ft_puterr("syntax error (unclosed quote)\n");
-  if (token_started)
-    flush_token(buff, &buff_i, &tokens, &token_count);
-  tokens[token_count] = NULL;
-  return (tokens);
+  if (lexer->token_started)
+    flush_token(lexer);
+  lexer->tokens[lexer->token_count] = NULL;
+  return (lexer->tokens);
 }
 
 #include <limits.h>
