@@ -123,13 +123,124 @@ char *get_home_dir(char *envp[])
   return (strdup(envp[i] + 5));
 }
 
+enum e_lexing_modes
+{
+  MODE_NORMAL,
+  MODE_SINGLE_QUOTE
+};
+
+int update_mode(char c, enum e_lexing_modes *mode)
+{
+  if (!c)
+    return (0);
+  if (c == '\'')
+  {
+    if (*mode == MODE_SINGLE_QUOTE)
+      *mode = MODE_NORMAL;
+    else
+      *mode = MODE_SINGLE_QUOTE;
+    return (1);
+  }
+  return (0);
+}
+
+// int should_append_to_token(char c, enum e_lexing_modes mode)
+// {
+//   if (mode == MODE_SINGLE_QUOTE) // single quote chars shouldn't reach this func call
+//     return (1);
+//   if (mode == MODE_NORMAL)
+//   {
+//     if (c == ' ') // TODO: || c == '"' || c == '|')
+//       return (0);
+//     else
+//       return (1);
+//   }
+// }
+
+int is_delimiter(char c, enum e_lexing_modes mode)
+{
+  if (mode == MODE_NORMAL)
+    if (c == ' ') // TODO: || c == '"' || c == '|' || c == '|')
+      return (1);
+  return (0);
+}
+
+void flush_token(char buff[1024], int *buff_i, char ***tokens, int *token_count)
+{
+  buff[*buff_i] = '\0';
+  (*tokens)[(*token_count)++] = strdup(buff);
+  *buff_i = 0;
+}
+
+// typedef struct s_lexer
+// {
+//   enum e_lexing_modes mode;
+// }	t_lexer;
+
+
+char **lex(char *line)
+{
+  enum e_lexing_modes mode;
+  int i;
+
+  // TODO: use a linked list instead
+  char **tokens = (char **)malloc(100 * sizeof(char *));
+  int token_count;
+
+  // TODO use append or ft_realloc
+  char buff[1024];
+  int buff_i;
+
+  int token_started;
+
+  token_count = 0;
+  i = 0;
+  mode = MODE_NORMAL;
+  buff_i = 0;
+
+  while (line[i])
+  {
+    if (update_mode(line[i], &mode))
+      token_started = 1;
+    else if (!is_delimiter(line[i], mode))
+    {
+      token_started = 1;
+      buff[buff_i++] = line[i]; // append_to_token
+    }
+    else if (token_started)
+    {
+      flush_token(buff, &buff_i, &tokens, &token_count);
+      token_started = 0;
+    }
+    i++;
+  }
+  if (mode != MODE_NORMAL)
+    ft_puterr("syntax error (unclosed quote)\n");
+  if (token_started)
+    flush_token(buff, &buff_i, &tokens, &token_count);
+  tokens[token_count] = NULL;
+  return (tokens);
+}
+// i = skip_space(line, i);        // same as if (line[i] && line[i] == ' '){i++;continue;}
+
 #include <limits.h>
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
+  char **tokens;
 
   // printf("path_max %d\n", PATH_MAX);
   // printf("home dir %s\n", get_home_dir(envp));
+
+  // while (1)
+  // {
+  //   setbuf(stdout, NULL);
+  //   line = readline(NULL);
+  //   tokens = lex(line);
+  //   for (size_t i = 0; tokens[i]; i++)
+  //     printf("%s\n", tokens[i]);
+  // }
+
   // TODO: replace strncmps with split[0] once tokenization is implemented
   while (1)
   {
@@ -139,50 +250,56 @@ int main(int argc, char *argv[], char *envp[])
     printf("$ ");
 
     line = readline(NULL);
+    if (!line)
+      return (ft_puterr("input is null"), 1);
 
-    if (!strcmp(line, "exit"))
+    tokens = lex(line);
+    if (!tokens || !tokens[0])
+      continue;
+
+    // TODO: add exit status e.g. exit 42
+    if (!strcmp(tokens[0], "exit"))
       return (free(line), 0);
 
     // using strncmp is bad because it ignores what comes directly after the command. e.g. echonxyz arg1 arg2 will behave as echo arg1 arg2
-    if (!ft_strncmp(line, "echo", 4))
+    if (!ft_strncmp(tokens[0], "echo", 4))
     {
-      char **arr = ft_split(line, ' ');
+      // char **arr = ft_split(line, ' ');
       // printf("%s\n", line + 4);
-      if (arr[1])
+      if (tokens[1])
       {
-        printf("%s", arr[1]);
-        for (int i = 2; arr[i]; i++)
-          printf(" %s", arr[i]);
+        printf("%s", tokens[1]);
+        for (int i = 2; tokens[i]; i++)
+          printf(" %s", tokens[i]);
       }
       printf("\n");
     }
-    else if (!ft_strncmp(line, "type", 4))
+    else if (!ft_strcmp(tokens[0], "type"))
     {
-      char **arr = ft_split(line, ' ');
-      for (int i = 1; arr[i]; i++)
+      for (int i = 1; tokens[i]; i++)
       {
-        if (!strcmp(arr[i], "type") || !strcmp(arr[i], "echo") || !strcmp(arr[i], "exit") || !strcmp(arr[i], "pwd") || !strcmp(arr[i], "cd"))
-          printf("%s is a shell builtin\n", arr[i]);
+        if (!strcmp(tokens[i], "type") || !strcmp(tokens[i], "echo") || !strcmp(tokens[i], "exit") || !strcmp(tokens[i], "pwd") || !strcmp(tokens[i], "cd"))
+          printf("%s is a shell builtin\n", tokens[i]);
         else
         {
-          char *cmd_path = resolve_path((const char *)arr[i], envp);
+          char *cmd_path = resolve_path((const char *)tokens[i], envp);
           if (!cmd_path)
-            printf("%s: not found\n", arr[i]);
+            printf("%s: not found\n", tokens[i]);
           else
-            printf("%s is %s\n", arr[i], cmd_path);
+            printf("%s is %s\n", tokens[i], cmd_path);
         }
       }
     }
-    else if (!ft_strncmp(line, "pwd", 3))
+    else if (!ft_strcmp(tokens[0], "pwd"))
     {
       char *buff = malloc(PATH_MAX);
       printf("%s\n", getcwd(buff, PATH_MAX));
       free(buff);
     }
-    else if (!ft_strncmp(line, "cd", 2))
+    else if (!ft_strcmp(tokens[0], "cd"))
     {
       // char *buff = malloc(PATH_MAX);
-      if (strlen(line) == 2 || !ft_strncmp(line, "cd ~", 4) && strlen(line) == 4)
+      if (!tokens[1] || !ft_strcmp(tokens[1], "~"))
       {
         char *home = get_home_dir(envp);
         if (!home)
@@ -194,20 +311,21 @@ int main(int argc, char *argv[], char *envp[])
         }
       }
       else
-      if (chdir(line + 3))
-        printf("cd: %s: No such file or directory\n", line + 3);
+      if (chdir(tokens[1]))
+        printf("cd: %s: No such file or directory\n", tokens[1]);
     }
-    else if(strlen(line))
+    else if (tokens && tokens[0])
     {
       pid_t pid = fork();
       if (pid < 0) // Error handling
         return (/*ft_puterr("Fork 1) failed\n"),*/ EXIT_FAILURE);
       else if (pid == 0)
-        exec_cmd(line, envp);
+        exec_cmd(tokens, envp);
       else
         waitpid(pid, NULL, 0); // parent waits for child to finish
     }
     free(line);
+    free_split(tokens);
   }
 
   return 0;
