@@ -5,10 +5,33 @@ void ft_puterr(char *s)
   write(2, s, ft_strlen(s));
 }
 
+char  **build_arg_array(t_token *tokens)
+{
+  int count;
+  int i;
+  char **args;
+  t_token *ptr;
+
+  count = ft_lstsize(tokens);
+  args = (char **)malloc((count + 1) * sizeof(char *));
+  if (!args)
+    return (ft_puterr("build_arg_array malloc fail\n"), NULL);
+  ptr = tokens;
+  i = 0;
+  while (ptr)
+  {
+    args[i++] = strdup(ptr->value);
+    ptr = ptr->next;
+  }
+  args[i++] = NULL;
+  return (args);
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
-  char **tokens;
+  t_token *tokens;
+  t_token *ptr;
 
   // printf("path_max %d\n", PATH_MAX);
   // printf("home dir %s\n", get_home_dir(envp));
@@ -34,48 +57,61 @@ int main(int argc, char *argv[], char *envp[])
       return (ft_puterr("input is null"), 1);
 
     tokens = lex(line);
-    if (!tokens || !tokens[0])
+
+    if (!tokens)
       continue;
 
-    // TODO: add exit status e.g. exit 42
-    if (!strcmp(tokens[0], "exit"))
-      return (free(line), 0);
+    // t_token *ptr = tokens;
+    // while (ptr)
+    // {
+    //   printf("%d\t%s\n", ptr->type, ptr->value);
+    //   ptr = ptr->next;
+    // }
 
-    if (!ft_strncmp(tokens[0], "echo", 4))
+    // TODO: add exit status e.g. exit 42
+    if (!strcmp(tokens->value, "exit"))
+      return (free(line), ft_lstclear(&tokens), 0);
+    if (!strcmp(tokens->value, "echo"))
     {
-      if (tokens[1])
+      if (tokens->next && tokens->next->value)
       {
-        printf("%s", tokens[1]);
-        for (int i = 2; tokens[i]; i++)
-          printf(" %s", tokens[i]);
+        printf("%s", tokens->next->value);
+        ptr = tokens->next->next;
+        while (ptr)
+        {
+          printf(" %s", ptr->value);
+          ptr = ptr->next;
+        }
       }
       printf("\n");
     }
-    else if (!strcmp(tokens[0], "type"))
+    else if (!strcmp(tokens->value, "type"))
     {
-      for (int i = 1; tokens[i]; i++)
+      ptr = tokens->next;
+      while (ptr)
       {
-        if (!strcmp(tokens[i], "type") || !strcmp(tokens[i], "echo") || !strcmp(tokens[i], "exit") || !strcmp(tokens[i], "pwd") || !strcmp(tokens[i], "cd"))
-          printf("%s is a shell builtin\n", tokens[i]);
+        if (!strcmp(ptr->value, "type") || !strcmp(ptr->value, "echo") || !strcmp(ptr->value, "exit") || !strcmp(ptr->value, "pwd") || !strcmp(ptr->value, "cd"))
+          printf("%s is a shell builtin\n", ptr->value);
         else
         {
-          char *cmd_path = resolve_path((const char *)tokens[i], envp);
+          char *cmd_path = resolve_path((const char *)ptr->value, envp);
           if (!cmd_path)
-            printf("%s: not found\n", tokens[i]);
+            printf("%s: not found\n", ptr->value);
           else
-            printf("%s is %s\n", tokens[i], cmd_path);
+            printf("%s is %s\n", ptr->value, cmd_path);
         }
+        ptr = ptr->next;
       }
     }
-    else if (!strcmp(tokens[0], "pwd"))
+    else if (!strcmp(tokens->value, "pwd"))
     {
       char *buff = malloc(PATH_MAX);
       printf("%s\n", getcwd(buff, PATH_MAX));
       free(buff);
     }
-    else if (!strcmp(tokens[0], "cd"))
+    else if (!strcmp(tokens->value, "cd"))
     {
-      if (!tokens[1] || !strcmp(tokens[1], "~"))
+      if (!tokens->next || !strcmp(tokens->next->value, "~"))
       {
         char *home = get_home_dir(envp);
         if (!home)
@@ -87,10 +123,10 @@ int main(int argc, char *argv[], char *envp[])
         }
       }
       else
-      if (chdir(tokens[1]))
-        printf("cd: %s: No such file or directory\n", tokens[1]);
+      if (tokens->next && chdir(tokens->next->value))
+        printf("cd: %s: No such file or directory\n", tokens->next->value);
     }
-    else if (tokens && tokens[0])
+    else if (tokens && tokens->value)
     {
       pid_t pid = fork();
       if (pid < 0) // Error handling
@@ -101,7 +137,8 @@ int main(int argc, char *argv[], char *envp[])
         waitpid(pid, NULL, 0); // parent waits for child to finish
     }
     free(line);
-    free_split(tokens);
+    // free_split(tokens);
+    ft_lstclear(&tokens);
   }
 
   return 0;

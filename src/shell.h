@@ -26,11 +26,27 @@ enum e_lexing_modes
   MODE_DOUBLE_QUOTE
 };
 
+enum e_token_type
+{
+  WORD,
+  PIPE,
+  REDIR_IN,
+  REDIR_OUT,
+  HEREDOC,
+  APPEND
+};
+
+typedef struct s_token
+{
+  enum e_token_type type;
+  char *value;
+  struct s_token *next;
+} t_token;
+
 typedef struct s_lexer
 {
   enum e_lexing_modes mode;
-  // TODO: use a linked list instead
-  char **tokens;
+  t_token *tokens;
   int token_count;
   // TODO use append or ft_realloc
   char buff[1024];
@@ -52,11 +68,19 @@ int		is_delimiter(char c, t_lexer *lexer);
 void	append_to_token(char c, t_lexer *lexer);
 void	flush_token(t_lexer *lexer);
 int		init_lexer(t_lexer **lexer);
-char	**lex(char *line);
+t_token	*lex(char *line);
 char	*ft_strjoin_path(char const *dir, char const *cmd);
 char	**get_path_split_arr(char *envp[]);
 char	*resolve_path(const char *cmd, char *envp[]);
-void	exec_cmd(char **cmd_str_split, char **envp);
+void	exec_cmd(t_token *tokens, char **envp);
 char	*get_home_dir(char *envp[]);
+void	ft_lstadd_front(t_token **lst, t_token *new);
+void	ft_lstadd_back(t_token **lst, t_token *new);
+t_token	*ft_lstlast(t_token *lst);
+t_token	*ft_lstnew(enum e_token_type type, char *value);
+int		ft_lstsize(t_token *lst);
+void	ft_lstdelone(t_token *lst);
+void	ft_lstclear(t_token **lst);
+char	**build_arg_array(t_token *tokens);
 
 #endif // SHELL_H
