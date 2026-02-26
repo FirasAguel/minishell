@@ -128,37 +128,6 @@ enum e_lexing_modes
   MODE_DOUBLE_QUOTE
 };
 
-int update_mode(char c, enum e_lexing_modes *mode)
-{
-  if (!c)
-    return (0);
-  if (c == '\'' && *mode != MODE_DOUBLE_QUOTE)
-  {
-    if (*mode == MODE_SINGLE_QUOTE)
-      *mode = MODE_NORMAL;
-    else
-      *mode = MODE_SINGLE_QUOTE;
-    return (1);
-  }
-  if (c == '"' && *mode != MODE_SINGLE_QUOTE)
-  {
-    if (*mode == MODE_DOUBLE_QUOTE)
-      *mode = MODE_NORMAL;
-    else
-      *mode = MODE_DOUBLE_QUOTE;
-    return (1);
-  }
-  return (0);
-}
-
-int is_delimiter(char c, enum e_lexing_modes mode)
-{
-  if (mode == MODE_NORMAL)
-    if (c == ' ') // TODO: || c == '|' || c == '<')
-      return (1);
-  return (0);
-}
-
 typedef struct s_lexer
 {
   enum e_lexing_modes mode;
@@ -169,12 +138,52 @@ typedef struct s_lexer
   char buff[1024];
   int buff_i;
   int token_started;
+  int escape_flag;
 }	t_lexer;
+
+int update_mode(char c, t_lexer *lexer)
+{
+  if (!c || lexer->escape_flag)
+    return (0);
+  if (c == '\'' && lexer->mode != MODE_DOUBLE_QUOTE)
+  {
+    if (lexer->mode == MODE_SINGLE_QUOTE)
+      lexer->mode = MODE_NORMAL;
+    else
+      lexer->mode = MODE_SINGLE_QUOTE;
+    return (1);
+  }
+  if (c == '"' && lexer->mode != MODE_SINGLE_QUOTE)
+  {
+    if (lexer->mode == MODE_DOUBLE_QUOTE)
+      lexer->mode = MODE_NORMAL;
+    else
+      lexer->mode = MODE_DOUBLE_QUOTE;
+    return (1);
+  }
+  return (0);
+}
+
+int is_delimiter(char c, t_lexer *lexer)
+{
+  if (lexer->mode == MODE_NORMAL && !lexer->escape_flag)
+    if (c == ' ') // TODO: || c == '|' || c == '<')
+      return (1);
+  return (0);
+}
 
 void append_to_token(char c, t_lexer *lexer)
 {
   lexer->token_started = 1;
-  lexer->buff[lexer->buff_i++] = c;
+  if (lexer->mode == MODE_NORMAL && lexer->escape_flag)
+  {
+    lexer->buff[lexer->buff_i++] = c;
+    lexer->escape_flag = 0;
+  }
+  else if (lexer->mode == MODE_NORMAL && c == '\\')
+    lexer->escape_flag = 1;
+  else
+    lexer->buff[lexer->buff_i++] = c;
 }
 
 void flush_token(t_lexer *lexer)
@@ -196,6 +205,7 @@ int init_lexer(t_lexer **lexer)
   (*lexer)->token_count = 0;
   (*lexer)->mode = MODE_NORMAL;
   (*lexer)->buff_i = 0;
+  (*lexer)->escape_flag = 0;
   return (EXIT_SUCCESS);
 }
 
@@ -209,16 +219,18 @@ char **lex(char *line)
   i = 0;
   while (line[i])
   {
-    if (update_mode(line[i], &(lexer->mode)))
+    if (update_mode(line[i], lexer))
       lexer->token_started = 1;
-    else if (!is_delimiter(line[i], lexer->mode))
+    else if (!is_delimiter(line[i], lexer))
       append_to_token(line[i], lexer);
     else if (lexer->token_started)
       flush_token(lexer);
     i++;
   }
   if (lexer->mode != MODE_NORMAL)
-    ft_puterr("syntax error (unclosed quote)\n");
+    ft_puterr("lexing error: unclosed quote\n");
+  if (lexer->escape_flag)
+    ft_puterr("lexing error: dangling escape\n");
   if (lexer->token_started)
     flush_token(lexer);
   lexer->tokens[lexer->token_count] = NULL;
