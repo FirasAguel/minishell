@@ -1,0 +1,100 @@
+#include "shell.h"
+
+int update_mode(char c, t_lexer *lexer)
+{
+  if (!c || lexer->escape_flag)
+    return (0);
+  if (c == '\'' && lexer->mode == MODE_SINGLE_QUOTE)
+    return (lexer->mode = MODE_NORMAL, 1);
+  if (c == '\'' && lexer->mode == MODE_NORMAL)
+    return (lexer->mode = MODE_SINGLE_QUOTE, 1);
+  if (c == '"' && lexer->mode == MODE_DOUBLE_QUOTE)
+    return (lexer->mode = MODE_NORMAL, 1);
+  if (c == '"' && lexer->mode == MODE_NORMAL)
+    return (lexer->mode = MODE_DOUBLE_QUOTE, 1);
+  return (0);
+}
+
+int is_delimiter(char c, t_lexer *lexer)
+{
+  if (lexer->mode == MODE_NORMAL && !lexer->escape_flag)
+    if (c == ' ') // TODO: || c == '|' || c == '<')
+      return (1);
+  return (0);
+}
+
+static int is_escapable_in_double_quote(char c)
+{
+  return (c == '"' || c == '\\' || c == '$' || c == '`' || c == '\n');
+}
+
+void append_to_token(char c, t_lexer *lexer)
+{
+  lexer->token_started = 1;
+  if (lexer->escape_flag)
+  {
+    if (lexer->mode == MODE_NORMAL || (lexer->mode == MODE_DOUBLE_QUOTE && is_escapable_in_double_quote(c)))
+    {
+      lexer->buff[lexer->buff_i++] = c;
+      lexer->escape_flag = 0;
+    }
+    else
+      lexer->buff[lexer->buff_i++] = '\\';
+    lexer->escape_flag = 0;
+  }
+  else if ((lexer->mode == MODE_NORMAL || lexer->mode == MODE_DOUBLE_QUOTE) && c == '\\')
+    lexer->escape_flag = 1;
+  else
+    lexer->buff[lexer->buff_i++] = c;
+}
+
+void flush_token(t_lexer *lexer)
+{
+  lexer->buff[lexer->buff_i] = '\0';
+  lexer->tokens[lexer->token_count++] = strdup(lexer->buff);
+  lexer->buff_i = 0;
+  lexer->token_started = 0;
+}
+
+int init_lexer(t_lexer **lexer)
+{
+  *lexer = (t_lexer *)malloc(sizeof(t_lexer));
+  if (!*lexer)
+    return (ft_puterr("(*lexer) malloc failed\n"), EXIT_FAILURE);
+  (*lexer)->tokens = (char **)malloc(100 * sizeof(char *));
+  if (!(*lexer)->tokens)
+    return (ft_puterr("tokens malloc failed\n"), EXIT_FAILURE);
+  (*lexer)->token_count = 0;
+  (*lexer)->mode = MODE_NORMAL;
+  (*lexer)->buff_i = 0;
+  (*lexer)->escape_flag = 0;
+  return (EXIT_SUCCESS);
+}
+
+char **lex(char *line)
+{
+  t_lexer *lexer;
+  int i;
+
+  if (init_lexer(&lexer) != EXIT_SUCCESS)
+    return (NULL);
+  i = 0;
+  while (line[i])
+  {
+    if (update_mode(line[i], lexer))
+      lexer->token_started = 1;
+    else if (!is_delimiter(line[i], lexer))
+      append_to_token(line[i], lexer);
+    else if (lexer->token_started)
+      flush_token(lexer);
+    i++;
+  }
+  if (lexer->mode != MODE_NORMAL)
+    ft_puterr("lexing error: unclosed quote\n");
+  if (lexer->escape_flag)
+    ft_puterr("lexing error: dangling escape\n");
+  if (lexer->token_started)
+    flush_token(lexer);
+  lexer->tokens[lexer->token_count] = NULL;
+  return (lexer->tokens);
+}
