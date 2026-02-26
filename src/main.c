@@ -126,19 +126,28 @@ char *get_home_dir(char *envp[])
 enum e_lexing_modes
 {
   MODE_NORMAL,
-  MODE_SINGLE_QUOTE
+  MODE_SINGLE_QUOTE,
+  MODE_DOUBLE_QUOTE
 };
 
 int update_mode(char c, enum e_lexing_modes *mode)
 {
   if (!c)
     return (0);
-  if (c == '\'')
+  if (c == '\'' && *mode != MODE_DOUBLE_QUOTE)
   {
     if (*mode == MODE_SINGLE_QUOTE)
       *mode = MODE_NORMAL;
     else
       *mode = MODE_SINGLE_QUOTE;
+    return (1);
+  }
+  if (c == '"' && *mode != MODE_SINGLE_QUOTE)
+  {
+    if (*mode == MODE_DOUBLE_QUOTE)
+      *mode = MODE_NORMAL;
+    else
+      *mode = MODE_DOUBLE_QUOTE;
     return (1);
   }
   return (0);
