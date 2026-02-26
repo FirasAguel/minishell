@@ -145,22 +145,14 @@ int update_mode(char c, t_lexer *lexer)
 {
   if (!c || lexer->escape_flag)
     return (0);
-  if (c == '\'' && lexer->mode != MODE_DOUBLE_QUOTE)
-  {
-    if (lexer->mode == MODE_SINGLE_QUOTE)
-      lexer->mode = MODE_NORMAL;
-    else
-      lexer->mode = MODE_SINGLE_QUOTE;
-    return (1);
-  }
-  if (c == '"' && lexer->mode != MODE_SINGLE_QUOTE)
-  {
-    if (lexer->mode == MODE_DOUBLE_QUOTE)
-      lexer->mode = MODE_NORMAL;
-    else
-      lexer->mode = MODE_DOUBLE_QUOTE;
-    return (1);
-  }
+  if (c == '\'' && lexer->mode == MODE_SINGLE_QUOTE)
+    return (lexer->mode = MODE_NORMAL, 1);
+  if (c == '\'' && lexer->mode == MODE_NORMAL)
+    return (lexer->mode = MODE_SINGLE_QUOTE, 1);
+  if (c == '"' && lexer->mode == MODE_DOUBLE_QUOTE)
+    return (lexer->mode = MODE_NORMAL, 1);
+  if (c == '"' && lexer->mode == MODE_NORMAL)
+    return (lexer->mode = MODE_DOUBLE_QUOTE, 1);
   return (0);
 }
 
