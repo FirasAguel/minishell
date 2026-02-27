@@ -5,6 +5,7 @@ void ft_puterr(char *s)
   write(2, s, ft_strlen(s));
 }
 
+// TODO: pre-build for each command during parsing instead
 char  **build_arg_array(t_token *tokens)
 {
   int count;
@@ -32,6 +33,7 @@ int main(int argc, char *argv[], char *envp[])
   char *line;
   t_token *tokens;
   t_token *ptr;
+  char *builtin_cmds[] = {"exit", "echo", "type", "pwd", "cd", NULL};
 
   // printf("path_max %d\n", PATH_MAX);
   // printf("home dir %s\n", get_home_dir(envp));
@@ -50,82 +52,36 @@ int main(int argc, char *argv[], char *envp[])
     // Flush after every printf
     setbuf(stdout, NULL);
 
-    printf("$ ");
-
-    line = readline(NULL);
+    line = readline("$ ");
     if (!line)
-      return (ft_puterr("input is null"), 1);
+      return (ft_puterr("input is null\n"), 1);
 
     tokens = lex(line);
-
     if (!tokens)
+    {
+      ft_puterr("lex fail: no tokens\n");
       continue;
+    }
 
-    // t_token *ptr = tokens;
+    // ptr = tokens;
     // while (ptr)
     // {
     //   printf("%d\t%s\n", ptr->type, ptr->value);
     //   ptr = ptr->next;
     // }
 
+    // TODO: implement handle_builtins instead of the if(!strcmp) else tree
     // TODO: add exit status e.g. exit 42
     if (!strcmp(tokens->value, "exit"))
       return (free(line), ft_lstclear(&tokens), 0);
     if (!strcmp(tokens->value, "echo"))
-    {
-      if (tokens->next && tokens->next->value)
-      {
-        printf("%s", tokens->next->value);
-        ptr = tokens->next->next;
-        while (ptr)
-        {
-          printf(" %s", ptr->value);
-          ptr = ptr->next;
-        }
-      }
-      printf("\n");
-    }
+      handle_echo(tokens);
     else if (!strcmp(tokens->value, "type"))
-    {
-      ptr = tokens->next;
-      while (ptr)
-      {
-        if (!strcmp(ptr->value, "type") || !strcmp(ptr->value, "echo") || !strcmp(ptr->value, "exit") || !strcmp(ptr->value, "pwd") || !strcmp(ptr->value, "cd"))
-          printf("%s is a shell builtin\n", ptr->value);
-        else
-        {
-          char *cmd_path = resolve_path((const char *)ptr->value, envp);
-          if (!cmd_path)
-            printf("%s: not found\n", ptr->value);
-          else
-            printf("%s is %s\n", ptr->value, cmd_path);
-        }
-        ptr = ptr->next;
-      }
-    }
+      handle_type(tokens, builtin_cmds, envp);
     else if (!strcmp(tokens->value, "pwd"))
-    {
-      char *buff = malloc(PATH_MAX);
-      printf("%s\n", getcwd(buff, PATH_MAX));
-      free(buff);
-    }
+      handle_pwd();
     else if (!strcmp(tokens->value, "cd"))
-    {
-      if (!tokens->next || !strcmp(tokens->next->value, "~"))
-      {
-        char *home = get_home_dir(envp);
-        if (!home)
-          ft_puterr("home dir fail");
-        else
-        {
-          chdir(home);
-          free(home);
-        }
-      }
-      else
-      if (tokens->next && chdir(tokens->next->value))
-        printf("cd: %s: No such file or directory\n", tokens->next->value);
-    }
+      handle_cd(tokens, envp);
     else if (tokens && tokens->value)
     {
       pid_t pid = fork();
@@ -137,7 +93,6 @@ int main(int argc, char *argv[], char *envp[])
         waitpid(pid, NULL, 0); // parent waits for child to finish
     }
     free(line);
-    // free_split(tokens);
     ft_lstclear(&tokens);
   }
 

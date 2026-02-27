@@ -82,5 +82,10 @@ int		ft_lstsize(t_token *lst);
 void	ft_lstdelone(t_token *lst);
 void	ft_lstclear(t_token **lst);
 char	**build_arg_array(t_token *tokens);
+int		str_in_arr(char *s, char *arr[]);
+void	handle_echo(t_token *tokens);
+void	handle_cd(t_token *tokens, char **envp);
+void	handle_pwd();
+void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp);
 
 #endif // SHELL_H

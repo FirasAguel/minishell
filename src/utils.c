@@ -74,3 +74,19 @@ int	ft_strncmp(const char *s1, const char *s2, size_t n)
 		i++;
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
+
+int	str_in_arr(char *s, char *arr[])
+{
+	int	i;
+
+	if (!arr)
+		return (0);
+	i = 0;
+	while(arr[i])
+	{
+		if(!strcmp(s, arr[i]))
+			return (1);
+		i++;
+	}
+	return (0);
+}

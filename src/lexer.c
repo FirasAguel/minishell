@@ -68,8 +68,10 @@ void flush_token(t_lexer *lexer)
   lexer->token_started = 0;
 }
 
-void emit_operator_token(char c, t_lexer *lexer)
+void handle_operator(char c, t_lexer *lexer)
 {
+	if (lexer->token_started)
+	flush_token(lexer);
 	if (c == '|')
 		ft_lstadd_back(&(lexer->tokens), ft_lstnew(PIPE, "|"));
 	else if (c == '<')
@@ -83,14 +85,22 @@ int init_lexer(t_lexer **lexer)
   *lexer = (t_lexer *)malloc(sizeof(t_lexer));
   if (!*lexer)
     return (ft_puterr("(*lexer) malloc failed\n"), EXIT_FAILURE);
-  (*lexer)->tokens = NULL; //(t_token *)malloc(sizeof(t_token));
-//   if (!(*lexer)->tokens)
-//     return (ft_puterr("tokens malloc failed\n"), EXIT_FAILURE);
+  (*lexer)->tokens = NULL;
   (*lexer)->token_count = 0;
   (*lexer)->mode = MODE_NORMAL;
   (*lexer)->buff_i = 0;
   (*lexer)->escape_flag = 0;
   return (EXIT_SUCCESS);
+}
+
+void	cleanup_after_lexer(t_lexer *lexer)
+{
+  if (lexer->mode != MODE_NORMAL)
+    ft_puterr("lexing error: unclosed quote\n");
+  if (lexer->escape_flag)
+    ft_puterr("lexing error: dangling escape\n");
+  if (lexer->token_started)
+    flush_token(lexer);
 }
 
 t_token *lex(char *line)
@@ -106,23 +116,13 @@ t_token *lex(char *line)
     if (update_mode(line[i], lexer))
       lexer->token_started = 1;
     else if (is_operator(line[i], lexer))
-	{
-	  if (lexer->token_started)
-        flush_token(lexer);
-      emit_operator_token(line[i], lexer);
-	}
+		handle_operator(line[i], lexer);
     else if (!is_delimiter(line[i], lexer))
       append_to_token(line[i], lexer);
     else if (lexer->token_started)
       flush_token(lexer);
     i++;
   }
-  if (lexer->mode != MODE_NORMAL)
-    ft_puterr("lexing error: unclosed quote\n");
-  if (lexer->escape_flag)
-    ft_puterr("lexing error: dangling escape\n");
-  if (lexer->token_started)
-    flush_token(lexer);
-  // lexer->tokens[lexer->token_count] = NULL;
+  cleanup_after_lexer(lexer);
   return (lexer->tokens);
 }
