@@ -91,3 +91,19 @@ void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp)
 		ptr = ptr->next;
 	}
 }
+
+// not required and not allowd for minishell
+void	handle_history()
+{
+	HISTORY_STATE *history_state;
+	HIST_ENTRY **history_entries;
+
+	history_state = history_get_history_state();
+	history_entries = history_list();
+
+	if (history_entries && history_state && history_state->length > 0)
+		for (int i = 0; i < history_state->length; i++)
+			printf(" %d: %s\n", i + 1, history_entries[i]->line);
+	else
+		printf(" History list is empty.\n");
+}

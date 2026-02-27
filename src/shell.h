@@ -8,6 +8,7 @@
 # include <readline/readline.h>
 # include <sys/wait.h>
 # include <limits.h>
+# include <readline/history.h>
 
 # ifdef _WIN32
     #define ENV_PATH_SEP ';'
@@ -87,5 +88,6 @@ void	handle_echo(t_token *tokens);
 void	handle_cd(t_token *tokens, char **envp);
 void	handle_pwd();
 void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp);
+void	handle_history();
 
 #endif // SHELL_H

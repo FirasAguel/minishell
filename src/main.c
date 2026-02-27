@@ -39,7 +39,8 @@ void init_builtin_cmd_arr(char ***builtin_cmds)
   (*builtin_cmds)[2] = strdup("type");
   (*builtin_cmds)[3] = strdup("pwd");
   (*builtin_cmds)[4] = strdup("cd");
-  (*builtin_cmds)[5] = NULL;
+  (*builtin_cmds)[5] = strdup("history");
+  (*builtin_cmds)[6] = NULL;
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -68,8 +69,10 @@ int main(int argc, char *argv[], char *envp[])
     setbuf(stdout, NULL);
 
     line = readline("$ ");
-    if (!line)
-      return (ft_puterr("input is null\n"), 1);
+    if (!line || !*line)
+      continue;
+      // return (ft_puterr("input is null\n"), 1);
+    add_history(line);
 
     tokens = lex(line);
     if (!tokens)
@@ -97,6 +100,9 @@ int main(int argc, char *argv[], char *envp[])
       handle_pwd();
     else if (!strcmp(tokens->value, "cd"))
       handle_cd(tokens, envp);
+    // not required and not allowd for minishell
+    else if (!strcmp(tokens->value, "history"))
+      handle_history();
     else if (tokens && tokens->value)
     {
       pid_t pid = fork();
