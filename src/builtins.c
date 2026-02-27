@@ -103,7 +103,7 @@ void	handle_history()
 
 	if (history_entries && history_state && history_state->length > 0)
 		for (int i = 0; i < history_state->length; i++)
-			printf(" %d: %s\n", i + 1, history_entries[i]->line);
+			printf("%4d  %s\n", i + 1, history_entries[i]->line);
 	else
 		printf(" History list is empty.\n");
 }
