@@ -32,7 +32,7 @@ void init_builtin_cmd_arr(char ***builtin_cmds)
 {
   int builtin_cmd_count;
 
-  builtin_cmd_count = 5;
+  builtin_cmd_count = 6;
   *builtin_cmds = (char **)malloc((builtin_cmd_count + 1) * sizeof(char **));
   (*builtin_cmds)[0] = strdup("exit");
   (*builtin_cmds)[1] = strdup("echo");
@@ -102,7 +102,7 @@ int main(int argc, char *argv[], char *envp[])
       handle_cd(tokens, envp);
     // not required and not allowd for minishell
     else if (!strcmp(tokens->value, "history"))
-      handle_history();
+      handle_history(tokens);
     else if (tokens && tokens->value)
     {
       pid_t pid = fork();

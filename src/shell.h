@@ -88,6 +88,6 @@ void	handle_echo(t_token *tokens);
 void	handle_cd(t_token *tokens, char **envp);
 void	handle_pwd();
 void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp);
-void	handle_history();
+void	handle_history(t_token *tokens);
 
 #endif // SHELL_H

@@ -92,17 +92,47 @@ void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp)
 	}
 }
 
+int	is_positive_number(const char *nptr)
+{
+	int	l;
+	int	digits;
+
+	if (!nptr || !*nptr)
+		return (0);
+	l = 0;
+	if (nptr[l] && nptr[l] == '+')
+		l++;
+	digits = 0;
+	while (nptr[l] && nptr[l] >= '0' && nptr[l] <= '9' && ++digits)
+		l++;
+	if (nptr[l] == '\0' && digits > 0)
+		return (l);
+	else
+		return (0);
+}
+
 // not required and not allowd for minishell
-void	handle_history()
+void	handle_history(t_token *tokens)
 {
 	HISTORY_STATE *history_state;
 	HIST_ENTRY **history_entries;
+	int i = 0;
+	int line_count;
 
 	history_state = history_get_history_state();
 	history_entries = history_list();
-
+	if (tokens->next)
+	{
+		if(is_positive_number(tokens->next->value))
+		{
+			line_count = atoi(tokens->next->value);
+			i = history_state->length - line_count;
+		}
+		else
+			return (ft_puterr("history: invalid input\n"));
+	}
 	if (history_entries && history_state && history_state->length > 0)
-		for (int i = 0; i < history_state->length; i++)
+		for (; i < history_state->length; i++)
 			printf("%4d  %s\n", i + 1, history_entries[i]->line);
 	else
 		printf(" History list is empty.\n");
