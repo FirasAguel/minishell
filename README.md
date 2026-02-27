@@ -1,34 +1,123 @@
 [![progress-banner](https://backend.codecrafters.io/progress/shell/2794fc5b-9782-4a3e-b6df-0a545ea94366)](https://app.codecrafters.io/users/FirasAguel?r=2qF)
 
-This is a starting point for C solutions to the
+This is a submission to the
 ["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
+In this challenge, we are building our own POSIX compliant shell that's capable of
 interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+cd, pwd, echo and more.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+# Progress 🚀
+- [x] REPL
+- [x] builtin commands: `exit`, `echo`, `type`, `cd`, `pwd`
+- [x] locating executables with PATH and running programs
+- [x] lexing into tokens with "qu'ot'in"g and \escaping support
+- [ ] parsing
+- [ ] redirection
+- [ ] piping
+- [ ] history
 
-# Passing the first stage
+# Architecture
 
-The entry point for your `shell` implementation is in `src/main.c`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+## Lexer & Tokenization
+The lexer tokenizes the input line into a linked list using the following structs:
+```c
+enum e_token_type
+{
+  WORD,
+  PIPE,
+  REDIR_IN,
+  REDIR_OUT,
+  HEREDOC,
+  APPEND
+};
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+typedef struct s_token
+{
+  enum e_token_type type;
+  char *value;
+  struct s_token *next;
+} t_token;
+
+enum e_lexing_modes
+{
+  MODE_NORMAL,
+  MODE_SINGLE_QUOTE,
+  MODE_DOUBLE_QUOTE
+};
+
+typedef struct s_lexer
+{
+  enum e_lexing_modes mode;
+  t_token *tokens;
+  int token_count;
+  // TODO use append or ft_realloc
+  char buff[1024];
+  int buff_i;
+  int token_started;
+  int escape_flag;
+}	t_lexer;
 ```
 
-Time to move on to the next stage!
+### examples
+`cat in.txt|wc -l>out.txt`
+```mermaid
+graph LR
+  A["t_token
+type = WORD
+value = 'cat'"] --> B["t_token
+type = WORD
+value = 'in.txt'"]
 
-# Stage 2 & beyond
+  B --> C["t_token
+type = PIPE
+value = '|'"]
 
-Note: This section is for stages 2 and beyond.
+  C --> D["t_token
+type = WORD
+value = 'wc'"]
 
-1. Ensure you have `cmake` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.c`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+  D --> E["t_token
+type = WORD
+value = '-l'"]
+
+  E --> F["t_token
+type = REDIR_OUT
+value = '>'"]
+
+  F --> G["t_token
+type = WORD
+value = 'out.txt'"]
+```
+
+`wc -l<in.txt 1>out.txt`
+```mermaid
+graph LR
+  A["t_token
+type = WORD
+value = 'wc'"] --> B["t_token
+type = WORD
+value = '-l'"]
+
+  B --> C["t_token
+type = REDIR_IN
+value = '<'"]
+
+  C --> D["t_token
+type = WORD
+value = 'in.txt'"]
+
+  D --> E["t_token
+type = WORD
+value = 'PIPE'"]
+
+  E --> F["t_token
+type = REDIR_OUT
+value = '>'"]
+
+  F --> G["t_token
+type = WORD
+value = 'out.txt'"]
+
+  G --> NULL["NULL"]
+```
