@@ -1,6 +1,6 @@
 #include "shell.h"
 
-void	free_split(char **arr)
+void	free_char_arr(char **arr)
 {
 	int	i;
 

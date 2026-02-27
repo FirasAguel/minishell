@@ -67,7 +67,7 @@ char *resolve_path(const char *cmd, char *envp[])
   {
     cmd_path = ft_strjoin_path(dirs[i], cmd);
     if (!cmd_path)
-      return (free_split(dirs), NULL);
+      return (free_char_arr(dirs), NULL);
     if (access(cmd_path, X_OK) == 0)
     {
       success = 1;
@@ -75,7 +75,7 @@ char *resolve_path(const char *cmd, char *envp[])
     }
     free(cmd_path);
   }
-  free_split(dirs);
+  free_char_arr(dirs);
   if (!success)
     return (/*ft_puterr("Command not found.\n"),*/ NULL);
   return (cmd_path);
@@ -96,11 +96,11 @@ void exec_cmd(t_token *tokens, char **envp)
   if (!cmd_path)
   {
     printf("%s: command not found\n", cmd_str_split[0]);
-    free_split(cmd_str_split);
+    free_char_arr(cmd_str_split);
     exit(CMD_NOT_FOUND);
   }
   execve(cmd_path, cmd_str_split, envp);
-  free_split(cmd_str_split);
+  free_char_arr(cmd_str_split);
   perror("execve");
   free(cmd_path);
   exit(EXIT_FAILURE);

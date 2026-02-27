@@ -28,12 +28,26 @@ char  **build_arg_array(t_token *tokens)
   return (args);
 }
 
+void init_builtin_cmd_arr(char ***builtin_cmds)
+{
+  int builtin_cmd_count;
+
+  builtin_cmd_count = 5;
+  *builtin_cmds = (char **)malloc((builtin_cmd_count + 1) * sizeof(char **));
+  (*builtin_cmds)[0] = strdup("exit");
+  (*builtin_cmds)[1] = strdup("echo");
+  (*builtin_cmds)[2] = strdup("type");
+  (*builtin_cmds)[3] = strdup("pwd");
+  (*builtin_cmds)[4] = strdup("cd");
+  (*builtin_cmds)[5] = NULL;
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
   t_token *tokens;
   t_token *ptr;
-  char *builtin_cmds[] = {"exit", "echo", "type", "pwd", "cd", NULL};
+  char **builtin_cmds;
 
   // printf("path_max %d\n", PATH_MAX);
   // printf("home dir %s\n", get_home_dir(envp));
@@ -47,6 +61,7 @@ int main(int argc, char *argv[], char *envp[])
   //     printf("%s\n", tokens[i]);
   // }
 
+  init_builtin_cmd_arr(&builtin_cmds);
   while (1)
   {
     // Flush after every printf
@@ -73,7 +88,7 @@ int main(int argc, char *argv[], char *envp[])
     // TODO: implement handle_builtins instead of the if(!strcmp) else tree
     // TODO: add exit status e.g. exit 42
     if (!strcmp(tokens->value, "exit"))
-      return (free(line), ft_lstclear(&tokens), 0);
+      return (free(line), ft_lstclear(&tokens), free_char_arr(builtin_cmds), 0);
     if (!strcmp(tokens->value, "echo"))
       handle_echo(tokens);
     else if (!strcmp(tokens->value, "type"))
@@ -95,6 +110,6 @@ int main(int argc, char *argv[], char *envp[])
     free(line);
     ft_lstclear(&tokens);
   }
-
+  free_char_arr(builtin_cmds);
   return 0;
 }

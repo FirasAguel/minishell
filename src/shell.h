@@ -56,7 +56,7 @@ typedef struct s_lexer
 }	t_lexer;
 
 char	**ft_split(char const *s, char c);
-void	free_split(char **arr);
+void	free_char_arr(char **arr);
 size_t	ft_strlen(const char *s);
 size_t	ft_strlcpy(char *dst, const char *src, size_t size);
 char	*ft_strndup(char const *s, size_t n);
