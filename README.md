@@ -118,6 +118,4 @@ value = '>'"]
   F --> G["t_token
 type = WORD
 value = 'out.txt'"]
-
-  G --> NULL["NULL"]
 ```
