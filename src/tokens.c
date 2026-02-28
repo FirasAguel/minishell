@@ -65,27 +65,27 @@ int	ft_lstsize(t_token *lst)
 	return (i);
 }
 
-void	ft_lstdelone(t_token *lst)//, void (*del)(void*))
+void	ft_lstdelone(t_token *lst)
 {
-	if (!lst)// || !del)
+	if (!lst)
 		return ;
 	free(lst->value);
 	free(lst);
 	return ;
 }
 
-void	ft_lstclear(t_token **lst) //, void (*del)(void*))
+void	ft_lstclear(t_token **lst)
 {
 	t_token	*curr;
 	t_token	*next;
 
-	if (!lst) // || !del)
+	if (!lst)
 		return ;
 	curr = *lst;
 	while (curr)
 	{
 		next = curr->next;
-		ft_lstdelone(curr);//, del);
+		ft_lstdelone(curr);
 		curr = next;
 	}
 	*lst = NULL;

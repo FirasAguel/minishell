@@ -100,7 +100,6 @@ t_token	*ft_lstnew(enum e_token_type type, char *value);
 int		ft_lstsize(t_token *lst);
 void	ft_lstdelone(t_token *lst);
 void	ft_lstclear(t_token **lst);
-char	**build_arg_array(t_token *tokens);
 int		str_in_arr(char *s, char *arr[]);
 void	handle_echo(t_cmd *cmds);
 void	handle_cd(char **argv, char **envp);

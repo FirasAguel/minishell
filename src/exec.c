@@ -20,6 +20,7 @@ char *ft_strjoin_path(char const *dir, char const *cmd)
   return (str);
 }
 
+// TODO: handle_relative_path
 // char	*handle_relative_path(const char *cmd)
 // {
 // 	char	*cmd_escaped_str;
@@ -81,26 +82,24 @@ char *resolve_path(const char *cmd, char *envp[])
   return (cmd_path);
 }
 
-void exec_cmd(char **cmd_str_split, char **envp)
+void exec_cmd(char **argv, char **envp)
 {
   char *cmd_path;
-  // char **cmd_str_split;
 
-  // cmd_str_split = build_arg_array(tokens);
-  if (!cmd_str_split || !cmd_str_split[0])
+  if (!argv || !argv[0])
   {
-    ft_puterr("build_arg_array failed or empty command\n");
+    ft_puterr("argv NULL or no command\n");
     exit(CMD_NOT_FOUND);
   }
-  cmd_path = resolve_path((const char *)cmd_str_split[0], envp);
+  cmd_path = resolve_path((const char *)argv[0], envp);
   if (!cmd_path)
   {
-    printf("%s: command not found\n", cmd_str_split[0]);
-    free_char_arr(cmd_str_split);
+    printf("%s: command not found\n", argv[0]);
+    free_char_arr(argv);
     exit(CMD_NOT_FOUND);
   }
-  execve(cmd_path, cmd_str_split, envp);
-  free_char_arr(cmd_str_split);
+  execve(cmd_path, argv, envp);
+  free_char_arr(argv);
   perror("execve");
   free(cmd_path);
   exit(EXIT_FAILURE);

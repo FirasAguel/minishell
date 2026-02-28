@@ -1,31 +1,8 @@
 #include "shell.h"
 
-// TODO: pre-build for each command during parsing instead
-char  **build_arg_array(t_token *tokens)
-{
-  int count;
-  int i;
-  char **args;
-  t_token *ptr;
-
-  count = ft_lstsize(tokens);
-  args = (char **)malloc((count + 1) * sizeof(char *));
-  if (!args)
-    return (ft_puterr("build_arg_array malloc fail\n"), NULL);
-  ptr = tokens;
-  i = 0;
-  while (ptr)
-  {
-    args[i++] = strdup(ptr->value);
-    ptr = ptr->next;
-  }
-  args[i++] = NULL;
-  return (args);
-}
-
 void	t_cmd_delone(t_cmd *lst)
 {
-	if (!lst)// || !del)
+	if (!lst)
 		return ;
   free_char_arr(lst->argv);
 	free(lst);
@@ -201,7 +178,6 @@ int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
   cmd = cmds;
   next_in = STDIN_FILENO;
   pipefd[0] = pipefd[1] = -1;
-  int counter = 0;
   while (cmd)
   {
     if (cmd->next)
@@ -213,7 +189,6 @@ int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
     }
     else
       fds = (t_std_fds){next_in, STDOUT_FILENO, STDERR_FILENO};
-    // printf("counter %d: pipefd[0]=%d pipefd[0]=%d next_in=%d\n", counter++, pipefd[0], pipefd[1], next_in);
     pid = fork();
     if (pid < 0) // Error handling
       return (ft_puterr("handle_cmds: fork failed\n"), 0);
