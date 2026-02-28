@@ -236,11 +236,46 @@ int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
   return (1);
 }
 
+int	handle_input(char **line, t_cmd	**cmds)
+{
+	t_token *tokens;
+
+	// Flush after every printf
+	// not required for ft_printf since it uses write and no buffer
+	setbuf(stdout, NULL);
+	*line = readline("$ ");
+	if (!*line || !**line)
+	{
+		ft_puterr("input is null\n");
+		return (0);
+	}
+	add_history(*line);
+	tokens = lex(*line);
+	if (!tokens)
+	{
+		ft_puterr("lex fail\n");
+		return (0);
+	}
+	*cmds = parse(tokens);
+	if (!*cmds)
+	{
+		ft_puterr("parsing fail\n");
+		return (0);
+	}
+	ft_lstclear(&tokens);
+  // print_t_cmd(parse(tokens));
+  // ptr = tokens;
+  // while (ptr)
+  // {
+  //   printf("%d\t%s\n", ptr->type, ptr->value);
+  //   ptr = ptr->next;
+  // }
+	return (1);
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
   char *line;
-  t_token *tokens;
-  t_token *ptr;
   char **builtin_cmds;
   t_cmd		*cmds;
   int exit_code;
@@ -261,37 +296,8 @@ int main(int argc, char *argv[], char *envp[])
   init_builtin_cmd_arr(&builtin_cmds);
   while (1)
   {
-    // Flush after every printf
-    // not required for ft_printf since it uses write and no buffer
-    setbuf(stdout, NULL);
-
-    line = readline("$ ");
-    if (!line || !*line)
-      continue;
-      // return (ft_puterr("input is null\n"), 1);
-    add_history(line);
-
-    tokens = lex(line);
-    if (!tokens)
-    {
-      ft_puterr("lex fail\n");
-      continue;
-    }
-    cmds = parse(tokens);
-    if (!cmds)
-    {
-      ft_puterr("parsing fail\n");
-      continue;
-    }
-    ft_lstclear(&tokens);
-    // print_t_cmd(parse(tokens));
-    // ptr = tokens;
-    // while (ptr)
-    // {
-    //   printf("%d\t%s\n", ptr->type, ptr->value);
-    //   ptr = ptr->next;
-    // }
-
+    if (!handle_input(&line, &cmds))
+      continue ;
     // print_t_cmd(cmds);
     int ret = handle_special_builtins(cmds, &exit_code, envp);
     if (!ret)
