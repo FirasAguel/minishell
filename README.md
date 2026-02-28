@@ -9,12 +9,12 @@ cd, pwd, echo and more.
 
 # Progress 🚀
 - [x] REPL
-- [x] builtin commands: `exit`, `echo`, `type`, `cd`, `pwd`
+- [x] builtin commands: `exit`, `echo`, `type`, `cd`, `pwd`, `history`
 - [x] locating executables with PATH and running programs
 - [x] lexing into tokens with "qu'ot'in"g and \escaping support
-- [ ] parsing
+- [x] parsing
 - [ ] redirection
-- [ ] piping
+- [x] piping
 - [x] history
 
 # Architecture
