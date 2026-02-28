@@ -209,7 +209,7 @@ int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
   return (1);
 }
 
-int	handle_input(char **line, t_cmd	**cmds)
+int	handle_input(char **line, t_cmd	**cmds, int exit_code)
 {
 	t_token *tokens;
 
@@ -217,21 +217,22 @@ int	handle_input(char **line, t_cmd	**cmds)
 	// not required for ft_printf since it uses write and no buffer
 	setbuf(stdout, NULL);
 	*line = readline("$ ");
-	// TODO: handle EOF (CTRL-D etc)
-	if (!*line || !**line)
-		return (0);
+	if (!*line)
+		return (ft_puterr("exit\n"), exit(exit_code), 0);
+	if (!**line)
+		return (free(*line), 0);
 	add_history(*line);
 	tokens = lex(*line);
 	if (!tokens)
 	{
 		ft_puterr("lex fail\n");
-		return (0);
+		return (free(*line), 0);
 	}
 	*cmds = parse(tokens);
 	if (!*cmds)
 	{
 		ft_puterr("parsing fail\n");
-		return (0);
+		return (free(*line), ft_lstclear(&tokens), 0);
 	}
 	ft_lstclear(&tokens);
   // print_t_cmd(parse(tokens));
@@ -267,7 +268,7 @@ int main(int argc, char *argv[], char *envp[])
   init_builtin_cmd_arr(&builtin_cmds);
   while (1)
   {
-    if (!handle_input(&line, &cmds))
+    if (!handle_input(&line, &cmds, exit_code))
       continue ;
     // print_t_cmd(cmds);
     int ret = handle_special_builtins(cmds, &exit_code, envp);
