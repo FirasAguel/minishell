@@ -90,20 +90,10 @@ int main(int argc, char *argv[], char *envp[])
     //   ptr = ptr->next;
     // }
 
-    // TODO: implement handle_builtins instead of the if(!strcmp) else tree
     if (handle_exit(&tokens, &exit_code, &line))
       break ;
-    else if (!strcmp(tokens->value, "echo"))
-      handle_echo(tokens);
-    else if (!strcmp(tokens->value, "type"))
-      handle_type(tokens, builtin_cmds, envp);
-    else if (!strcmp(tokens->value, "pwd"))
-      handle_pwd();
-    else if (!strcmp(tokens->value, "cd"))
-      handle_cd(tokens, envp);
-    // not required and not allowd for minishell
-    else if (!strcmp(tokens->value, "history"))
-      handle_history(tokens);
+    else if(handle_builtins(tokens, builtin_cmds, envp))
+      ;
     else if (tokens && tokens->value)
     {
       pid_t pid = fork();

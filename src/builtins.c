@@ -1,16 +1,21 @@
 #include "shell.h"
 
-// typedef struct s_builtin
-// {
-//   char* cmd;
-//   void (*f)(int, int);
-// }	t_builtin;
-
-// int	handle_builtins(char **tokens, char **envp)
-// {
-// 	const t_builtin cmds[10];
-// 	...
-// }
+// handle builtins other than exit
+int	handle_builtins(t_token *tokens, char *builtin_cmds[], char **envp)
+{
+	if (!strcmp(tokens->value, "echo"))
+      return (handle_echo(tokens), 1);
+    if (!strcmp(tokens->value, "type"))
+      return (handle_type(tokens, builtin_cmds, envp), 1);
+    if (!strcmp(tokens->value, "pwd"))
+      return (handle_pwd(), 1);
+    if (!strcmp(tokens->value, "cd"))
+      return (handle_cd(tokens, envp), 1);
+    // not required and not allowed for minishell
+    if (!strcmp(tokens->value, "history"))
+      return (handle_history(tokens), 1);
+	return (0);
+}
 
 int	handle_exit(t_token **tokens, int *exit_code, char **line)
 {
