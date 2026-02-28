@@ -71,31 +71,32 @@ void flush_token(t_lexer *lexer)
 
 void handle_operator(char **line, int *i, t_lexer *lexer)
 {
-	if ((*line)[*i] == '|')
-		ft_lstadd_back(&(lexer->tokens), ft_lstnew(PIPE, "|"));
-	else if ((*line)[*i] == '<')
+  if ((*line)[*i] == '>' && lexer->buff_i == 1
+      && (lexer->buff[0] == '1' || lexer->buff[0] == '2'))
   {
-    if ((*line)[*i + 1] && (*line)[*i + 1] == '>')
-      return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(HEREDOC, "<<")));
-    ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_IN, "<"));
-  }
-	else if ((*line)[*i] == '>')
-  {
-    if (lexer->buff_i == 1 && (lexer->buff[0] == '1' || lexer->buff[0] == '2'))
-    {
+      char fd = lexer->buff[0];
       lexer->buff_i = 0;
       lexer->token_started = 0;
-      if (lexer->buff[0] == '1')
-        ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_OUT, "1>"));
-      if (lexer->buff[0] == '2')
-        ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_ERR, "2>"));
-    }
-    else if ((*line)[*i + 1] && (*line)[*i + 1] == '>')
-      return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(APPEND, ">>")));
-    else
-      ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_OUT, ">"));
+      if ((*line)[*i + 1] && (*line)[*i + 1] == '>')
+          return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(fd == '1' ? APPEND : APPEND_ERR, fd == '1' ? "1>>" : "2>>")));
+      ft_lstadd_back(&(lexer->tokens), ft_lstnew(fd == '1' ? REDIR_OUT : REDIR_ERR, fd == '1' ? "1>" : "2>"));
+      return ;
+  }
   if (lexer->token_started)
-    flush_token(lexer);
+      flush_token(lexer);
+  if ((*line)[*i] == '|')
+      ft_lstadd_back(&(lexer->tokens), ft_lstnew(PIPE, "|"));
+  else if ((*line)[*i] == '<')
+  {
+      if ((*line)[*i + 1] && (*line)[*i + 1] == '<')
+          return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(HEREDOC, "<<")));
+      ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_IN, "<"));
+  }
+  else if ((*line)[*i] == '>')
+  {
+      if ((*line)[*i + 1] && (*line)[*i + 1] == '>')
+          return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(APPEND, ">>")));
+      ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_OUT, ">"));
   }
 }
 

@@ -126,7 +126,7 @@ t_cmd *parse(t_token *tokens)
     }
     else
     {
-      if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC)
+      if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC || ptr->type == APPEND_ERR)
       {
         if (!ptr->next || ptr->next->type != WORD) // no append or heredoc support yet
           return (ft_puterr("parsing error: bad redirect\n"), NULL);
@@ -177,11 +177,7 @@ void	print_t_cmd(t_cmd *cmd)
     redir = cmd->redirs;
     while (redir)
     {
-      if (redir->type == REDIR_IN)
-        printf("< ");
-      else if (redir->type == REDIR_OUT)
-        printf("> ");
-      printf("%s ", redir->file);
+      printf("%d %s ",redir->type, redir->file);
       redir = redir->next;
     }
     printf("\n");
@@ -221,6 +217,18 @@ void	delegate_to_child(t_std_fds new_fds, t_cmd *cmd, char **builtin_cmds, char 
     else if (redir->type == REDIR_ERR)
     {
       new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (new_fds.err < 0)
+        return (perror(redir->file), exit (EXIT_FAILURE));
+    }
+    else if (redir->type == APPEND)
+    {
+      new_fds.out = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+      if (new_fds.out < 0)
+        return (perror(redir->file), exit (EXIT_FAILURE));
+    }
+    else if (redir->type == APPEND_ERR)
+    {
+      new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
       if (new_fds.err < 0)
         return (perror(redir->file), exit (EXIT_FAILURE));
     }

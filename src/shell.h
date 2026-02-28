@@ -37,7 +37,8 @@ enum e_token_type
   REDIR_OUT,
   REDIR_ERR,
   HEREDOC,
-  APPEND
+  APPEND,
+  APPEND_ERR
 };
 
 typedef struct s_token
