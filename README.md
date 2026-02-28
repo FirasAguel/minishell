@@ -1,7 +1,7 @@
 [![progress-banner](https://backend.codecrafters.io/progress/shell/2794fc5b-9782-4a3e-b6df-0a545ea94366)](https://app.codecrafters.io/users/FirasAguel?r=2qF)
 
 This is a submission to the
-["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
+["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview) which was accessible for free during February 2026.
 
 In this challenge, we are building our own POSIX compliant shell that's capable of
 interpreting shell commands, running external programs and builtin commands like
@@ -13,9 +13,10 @@ cd, pwd, echo and more.
 - [x] locating executables with PATH and running programs
 - [x] lexing into tokens with "qu'ot'in"g and \escaping support
 - [x] parsing
-- [ ] redirection
+- [x] redirection support for `>`, `>>`, `1>`, `2>`, and `<`. `<<` is also implemented but not tested. `1>>` and `2>>` were implemented by Claude.
 - [x] piping
 - [x] history
+- [ ] history persistence
 
 # Architecture
 
