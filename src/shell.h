@@ -10,6 +10,7 @@
 # include <limits.h>
 # include <readline/history.h>
 # include <errno.h>
+# include <fcntl.h>
 
 # ifdef _WIN32
     #define ENV_PATH_SEP ';'
@@ -34,6 +35,7 @@ enum e_token_type
   PIPE,
   REDIR_IN,
   REDIR_OUT,
+  REDIR_ERR,
   HEREDOC,
   APPEND
 };
@@ -57,8 +59,15 @@ typedef struct s_lexer
   int escape_flag;
 }	t_lexer;
 
+typedef struct s_redir
+{
+  enum e_token_type type;
+  char *file;
+  void* next;
+} t_redir;
 typedef struct s_cmd
 {
+    t_redir  *redirs;
     char **argv;
     int in;
     int out;
@@ -112,5 +121,11 @@ int		handle_exit(char **argv, int *exit_code);
 int		handle_builtins(t_cmd *cmds, char *builtin_cmds[], char **envp);
 int		handle_special_builtins(t_cmd *cmds, int *exit_code, char **envp);
 void	t_cmd_clear(t_cmd **lst);
+void	lst_redir_add_back(t_redir **lst, t_redir *new);
+t_redir	*lst_redir_last(t_redir *lst);
+t_redir	*lst_redir_new(enum e_token_type type, char *file);
+int	lst_redir_size(t_redir *lst);
+void	lst_redir_delone(t_redir *lst);
+void	lst_redir_clear(t_redir **lst);
 
 #endif // SHELL_H

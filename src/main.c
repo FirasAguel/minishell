@@ -27,32 +27,57 @@ void	t_cmd_clear(t_cmd **lst)
 	return ;
 }
 
-t_cmd *generate_cmd_node(t_token *start, t_token *end, int argc)
+t_cmd *t_cmd_new()
+{
+  t_cmd *cmd;
+
+  cmd = (t_cmd *)malloc(sizeof(t_cmd));
+  if (!cmd)
+    return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
+  cmd->argv = NULL;
+  cmd->in = STDIN_FILENO;
+  cmd->out = STDOUT_FILENO;
+  cmd->err = STDERR_FILENO;
+  cmd->redirs = NULL;
+  cmd->next = NULL;
+  return (cmd);
+}
+
+void  parse_cmd_tokens(t_cmd **cmd, t_token *start, t_token *end, int argc)
 {
   char **argv;
   t_token *ptr;
   int i;
-  t_cmd *cmd;
 
   argv = (char **)malloc((argc + 1) * sizeof(char *));
   if (!argv)
-    return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
-  cmd = (t_cmd *)malloc(sizeof(t_cmd));
-  if (!cmd)
-    return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
+    return (ft_puterr("generate_cmd_node: malloc fail\n"));
   i = 0;
   ptr = start;  // could remove this and just use start as ptr
   while (ptr && ptr != end)
   {
-    argv[i++] = strdup(ptr->value);
+    if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC)
+    {
+      // printf("adding redir of type %d to file %s to %p\n",ptr->type, ptr->next->value, &((*cmd)->redirs));
+      lst_redir_add_back(&((*cmd)->redirs), lst_redir_new(ptr->type, ptr->next->value));
+      ptr = ptr->next;
+    }
+    else
+      argv[i++] = strdup(ptr->value);
     ptr = ptr->next;
   }
   argv[i] = NULL;
-  cmd->argv = argv;
-  cmd->in = 0;
-  cmd->out = 1;
-  cmd->err = 2;
-  cmd->next = NULL;
+  (*cmd)->argv = argv;
+}
+
+t_cmd *generate_cmd_node(t_token *start, t_token *end, int argc)
+{
+  t_cmd *cmd;
+
+  cmd = t_cmd_new();
+  if (!cmd)
+    return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
+  parse_cmd_tokens(&cmd, start, end, argc);
   return (cmd);
 }
 
@@ -100,7 +125,16 @@ t_cmd *parse(t_token *tokens)
       argc = 0;
     }
     else
-      argc++;
+    {
+      if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC)
+      {
+        if (!ptr->next || ptr->next->type != WORD) // no append or heredoc support yet
+          return (ft_puterr("parsing error: bad redirect\n"), NULL);
+        ptr = ptr->next;
+      }
+      else
+        argc++;
+    }
     ptr = ptr->next;
   }
   if (argc)
@@ -128,21 +162,30 @@ void init_builtin_cmd_arr(char ***builtin_cmds)
   (*builtin_cmds)[5] = strdup("history");
   (*builtin_cmds)[6] = NULL;
 }
-
-void	print_t_cmd(t_cmd *cmds)
+void	print_t_cmd(t_cmd *cmd)
 {
-	t_cmd	*ptr;
   int i;
+	t_redir	*redir;
 
-  ptr = cmds;
-	while (ptr)
+  while (cmd)
 	{
-    printf("%s", ptr->argv[0]);
+    printf("%s", cmd->argv[0]);
     i = 1;
-    while (ptr->argv[i])
-			printf(" %s", ptr->argv[i++]);
-    ptr = ptr->next;
+    while (cmd->argv[i])
+			printf(" %s", cmd->argv[i++]);
     printf("\n");
+    redir = cmd->redirs;
+    while (redir)
+    {
+      if (redir->type == REDIR_IN)
+        printf("< ");
+      else if (redir->type == REDIR_OUT)
+        printf("> ");
+      printf("%s ", redir->file);
+      redir = redir->next;
+    }
+    printf("\n");
+    cmd = cmd->next;
 	}
 }
 
@@ -158,9 +201,35 @@ void	close_fds_if(t_std_fds std_fds)
 
 void	delegate_to_child(t_std_fds new_fds, t_cmd *cmd, char **builtin_cmds, char **envp)
 {
+  t_redir *redir;
+
+  redir = cmd->redirs;
+  while (redir)
+  {
+    if (redir->type == REDIR_IN)
+    {
+      new_fds.in = open(redir->file, O_RDONLY);
+      if (new_fds.in < 0)
+        return (perror(redir->file), exit (EXIT_FAILURE));
+    }
+    else if (redir->type == REDIR_OUT)
+    {
+      new_fds.out = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (new_fds.out < 0)
+        return (perror(redir->file), exit (EXIT_FAILURE));
+    }
+    else if (redir->type == REDIR_ERR)
+    {
+      new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (new_fds.err < 0)
+        return (perror(redir->file), exit (EXIT_FAILURE));
+    }
+    redir = redir->next;
+  }
 	dup2(new_fds.in, STDIN_FILENO);
 	dup2(new_fds.out, STDOUT_FILENO);
 	dup2(new_fds.err, STDERR_FILENO);
+  close_fds_if(new_fds);
   if (handle_builtins(cmd, builtin_cmds, envp))
     exit (0);
   exec_cmd(cmd->argv, envp);
@@ -228,6 +297,7 @@ int	handle_input(char **line, t_cmd	**cmds, int exit_code)
 		ft_puterr("lex fail\n");
 		return (free(*line), 0);
 	}
+  // t_token *ptr = tokens;
 	*cmds = parse(tokens);
 	if (!*cmds)
 	{
@@ -236,7 +306,6 @@ int	handle_input(char **line, t_cmd	**cmds, int exit_code)
 	}
 	ft_lstclear(&tokens);
   // print_t_cmd(parse(tokens));
-  // ptr = tokens;
   // while (ptr)
   // {
   //   printf("%d\t%s\n", ptr->type, ptr->value);

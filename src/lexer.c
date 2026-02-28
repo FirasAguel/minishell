@@ -69,16 +69,34 @@ void flush_token(t_lexer *lexer)
   lexer->token_started = 0;
 }
 
-void handle_operator(char c, t_lexer *lexer)
+void handle_operator(char **line, int *i, t_lexer *lexer)
 {
-	if (lexer->token_started)
-	flush_token(lexer);
-	if (c == '|')
+	if ((*line)[*i] == '|')
 		ft_lstadd_back(&(lexer->tokens), ft_lstnew(PIPE, "|"));
-	else if (c == '<')
-		ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_IN, "<"));
-	else if (c == '>')
-		ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_OUT, ">"));
+	else if ((*line)[*i] == '<')
+  {
+    if ((*line)[*i + 1] && (*line)[*i + 1] == '>')
+      return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(HEREDOC, "<<")));
+    ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_IN, "<"));
+  }
+	else if ((*line)[*i] == '>')
+  {
+    if (lexer->buff_i == 1 && (lexer->buff[0] == '1' || lexer->buff[0] == '2'))
+    {
+      lexer->buff_i = 0;
+      lexer->token_started = 0;
+      if (lexer->buff[0] == '1')
+        ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_OUT, "1>"));
+      if (lexer->buff[0] == '2')
+        ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_ERR, "2>"));
+    }
+    else if ((*line)[*i + 1] && (*line)[*i + 1] == '>')
+      return ((*i)++, ft_lstadd_back(&(lexer->tokens), ft_lstnew(APPEND, ">>")));
+    else
+      ft_lstadd_back(&(lexer->tokens), ft_lstnew(REDIR_OUT, ">"));
+  if (lexer->token_started)
+    flush_token(lexer);
+  }
 }
 
 int init_lexer(t_lexer **lexer)
@@ -118,7 +136,7 @@ t_token *lex(char *line)
     if (update_mode(line[i], lexer))
       lexer->token_started = 1;
     else if (is_operator(line[i], lexer))
-		handle_operator(line[i], lexer);
+		handle_operator(&line, &i, lexer);
     else if (!is_delimiter(line[i], lexer))
       append_to_token(line[i], lexer);
     else if (lexer->token_started)
