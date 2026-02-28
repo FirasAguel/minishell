@@ -127,6 +127,7 @@ void	handle_type(t_cmd *cmds, char *builtin_cmds[], char **envp)
 				printf("%s: not found\n", cmds->argv[i]);
 			else
 				printf("%s is %s\n", cmds->argv[i], cmd_path);
+			free(cmd_path);
 		}
 		i++;
 	}

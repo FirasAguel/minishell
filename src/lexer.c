@@ -104,6 +104,7 @@ void	cleanup_after_lexer(t_lexer *lexer)
 t_token *lex(char *line)
 {
   t_lexer *lexer;
+  t_token *tokens;
   int i;
 
   if (init_lexer(&lexer) != EXIT_SUCCESS)
@@ -122,5 +123,7 @@ t_token *lex(char *line)
     i++;
   }
   cleanup_after_lexer(lexer);
-  return (lexer->tokens);
+  tokens = lexer->tokens;
+  free(lexer);
+  return (tokens);
 }
