@@ -1,68 +1,80 @@
 #include "shell.h"
 
-// handle builtins other than exit
-int	handle_builtins(t_token *tokens, char *builtin_cmds[], char **envp)
+int is_special_builtin(char *cmd_name)
 {
-	if (!strcmp(tokens->value, "echo"))
-      return (handle_echo(tokens), 1);
-    if (!strcmp(tokens->value, "type"))
-      return (handle_type(tokens, builtin_cmds, envp), 1);
-    if (!strcmp(tokens->value, "pwd"))
-      return (handle_pwd(), 1);
-    if (!strcmp(tokens->value, "cd"))
-      return (handle_cd(tokens, envp), 1);
-    // not required and not allowed for minishell
-    if (!strcmp(tokens->value, "history"))
-      return (handle_history(tokens), 1);
+	return (!strcmp(cmd_name, "exit") || !strcmp(cmd_name, "cd")
+		|| !strcmp(cmd_name, "export") || !strcmp(cmd_name, "unset"));
+}
+
+// TODO: add export and unset
+int	handle_special_builtins(t_cmd *cmds, int *exit_code, char **envp)
+{
+	if (cmds->next != NULL || !is_special_builtin(cmds->argv[0]))
+		return (0);
+	if (!strcmp(cmds->argv[0], "exit"))
+		return (handle_exit(cmds->argv, exit_code));
+	if (!strcmp(cmds->argv[0], "cd"))
+		return (handle_cd(cmds->argv, envp), 2);
 	return (0);
 }
 
-int	handle_exit(t_token **tokens, int *exit_code, char **line)
+// handle builtins other than exit
+int	handle_builtins(t_cmd *cmds, char *builtin_cmds[], char **envp)
 {
-	if (strcmp((*tokens)->value, "exit"))
-		return (0);
-	if (!(*tokens)->next)
+	if (!strcmp(cmds->argv[0], "echo"))
+      return (handle_echo(cmds), 1);
+    if (!strcmp(cmds->argv[0], "type"))
+      return (handle_type(cmds, builtin_cmds, envp), 1);
+    if (!strcmp(cmds->argv[0], "pwd"))
+      return (handle_pwd(), 1);
+    if (!strcmp(cmds->argv[0], "exit"))
+      return (1);
+    if (!strcmp(cmds->argv[0], "cd"))
+      return (1);
+    // not required and not allowed for minishell
+    if (!strcmp(cmds->argv[0], "history"))
+      return (handle_history(cmds), 1);
+	return (0);
+}
+
+int	handle_exit(char **argv, int *exit_code)
+{
+	if (!argv[1])
 	{
-		free(*line);
-		ft_lstclear(tokens);
 		*exit_code = EXIT_SUCCESS;
 		return (1);
 	}
-	if ((*tokens)->next->next)
+	if (argv[2])
 		return (ft_puterr("exit: too many arguments\n"), 0);
-	if (is_number((*tokens)->next->value))
+	if (is_number(argv[1]))
 	{
-		free(*line);
-		*exit_code = atoi((*tokens)->next->value) % 256;
-		ft_lstclear(tokens);
+		*exit_code = atoi(argv[1]) % 256;
 		return (1);
 	}
 	else
 		return (ft_puterr("exit: numeric argument is required\n"), 0);
 }
 
-void	handle_echo(t_token *tokens)
+// TODO: option -n
+void	handle_echo(t_cmd *cmds)
 {
-	t_token	*ptr;
+	int	i;
 
-	if (tokens->next && tokens->next->value)
+	if (cmds->argv[1])
 	{
-		printf("%s", tokens->next->value);
-		ptr = tokens->next->next;
-		while (ptr)
-		{
-			printf(" %s", ptr->value);
-			ptr = ptr->next;
-		}
+		printf("%s", cmds->argv[1]);
+		i = 2;
+		while (cmds->argv[i])
+			printf(" %s", cmds->argv[i++]);
 	}
 	printf("\n");
 }
 
-void	handle_cd(t_token *tokens, char **envp)
+void	handle_cd(char **argv, char **envp)
 {
 	char	*home;
 
-	if (!tokens->next || !strcmp(tokens->next->value, "~"))
+	if (!argv[1] || !strcmp(argv[1], "~"))
 	{
 		home = get_home_dir(envp);
 		if (!home)
@@ -73,8 +85,8 @@ void	handle_cd(t_token *tokens, char **envp)
 			free(home);
 		}
 	}
-	else if (tokens->next && chdir(tokens->next->value))
-		printf("cd: %s: No such file or directory\n", tokens->next->value);
+	else if (argv[1] && chdir(argv[1]))
+		printf("cd: %s: No such file or directory\n", argv[1]);
 }
 
 void	handle_pwd()
@@ -98,26 +110,25 @@ void	handle_pwd()
 	free(buff);
 }
 
-void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp)
+void	handle_type(t_cmd *cmds, char *builtin_cmds[], char **envp)
 {
-	t_token	*ptr;
 	char *cmd_path;
+	int	i;
 
-
-	ptr = tokens->next;
-	while (ptr)
+	i = 1;
+	while (cmds->argv[i])
 	{
-		if (str_in_arr(ptr->value, builtin_cmds))
-			printf("%s is a shell builtin\n", ptr->value);
+		if (str_in_arr(cmds->argv[i], builtin_cmds))
+			printf("%s is a shell builtin\n", cmds->argv[i]);
 		else
 		{
-			cmd_path = resolve_path((const char *)ptr->value, envp);
+			cmd_path = resolve_path((const char *)cmds->argv[i], envp);
 			if (!cmd_path)
-				printf("%s: not found\n", ptr->value);
+				printf("%s: not found\n", cmds->argv[i]);
 			else
-				printf("%s is %s\n", ptr->value, cmd_path);
+				printf("%s is %s\n", cmds->argv[i], cmd_path);
 		}
-		ptr = ptr->next;
+		i++;
 	}
 }
 
@@ -126,8 +137,8 @@ int	is_positive_number(const char *nptr)
 	return (nptr[0] != '-' && is_number(nptr));
 }
 
-// not required and not allowed for minishell
-void	handle_history(t_token *tokens)
+// // not required and not allowed for minishell
+void	handle_history(t_cmd *cmds)
 {
 	HISTORY_STATE *history_state;
 	HIST_ENTRY **history_entries;
@@ -136,11 +147,13 @@ void	handle_history(t_token *tokens)
 
 	history_state = history_get_history_state();
 	history_entries = history_list();
-	if (tokens->next)
+	if (cmds->argv[1])
 	{
-		if(is_positive_number(tokens->next->value))
+		if (cmds->argv[2])
+			return (ft_puterr("history: too many arguments\n"));
+		if(is_positive_number(cmds->argv[1]))
 		{
-			line_count = atoi(tokens->next->value);
+			line_count = atoi(cmds->argv[1]);
 			i = history_state->length - line_count;
 		}
 		else

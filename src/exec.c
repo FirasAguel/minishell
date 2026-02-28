@@ -81,12 +81,12 @@ char *resolve_path(const char *cmd, char *envp[])
   return (cmd_path);
 }
 
-void exec_cmd(t_token *tokens, char **envp)
+void exec_cmd(char **cmd_str_split, char **envp)
 {
   char *cmd_path;
-  char **cmd_str_split;
+  // char **cmd_str_split;
 
-  cmd_str_split = build_arg_array(tokens);
+  // cmd_str_split = build_arg_array(tokens);
   if (!cmd_str_split || !cmd_str_split[0])
   {
     ft_puterr("build_arg_array failed or empty command\n");

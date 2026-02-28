@@ -26,10 +26,8 @@ int is_delimiter(char c, t_lexer *lexer)
 {
   if (lexer->mode == MODE_NORMAL && !lexer->escape_flag)
   {
-	if (c == '|')// || c == '<')
-	  return (/* emit token here ?*/ 1);
-    if (c == ' ') // TODO: || c == '|' || c == '<')
-      return (1);
+	if (c == ' ' || c == '|') // || c == '<' || c == '>')
+	  return (1);
   }
   return (0);
 }

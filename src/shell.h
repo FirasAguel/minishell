@@ -56,6 +56,24 @@ typedef struct s_lexer
   int escape_flag;
 }	t_lexer;
 
+typedef struct s_cmd
+{
+    char **argv;
+    int in;
+    int out;
+    int err;
+    void* next;
+} t_cmd;
+typedef struct s_std_fds
+{
+	int	in;
+	int	out;
+	int	err;
+} t_std_fds;
+
+int		ft_printf(const char *format, ...);
+int		ft_printf_fd(int fd, const char *format, ...);
+
 char	**ft_split(char const *s, char c);
 void	free_char_arr(char **arr);
 size_t	ft_strlen(const char *s);
@@ -73,7 +91,7 @@ t_token	*lex(char *line);
 char	*ft_strjoin_path(char const *dir, char const *cmd);
 char	**get_path_split_arr(char *envp[]);
 char	*resolve_path(const char *cmd, char *envp[]);
-void	exec_cmd(t_token *tokens, char **envp);
+void	exec_cmd(char **cmd_str_split, char **envp);
 char	*get_home_dir(char *envp[]);
 void	ft_lstadd_front(t_token **lst, t_token *new);
 void	ft_lstadd_back(t_token **lst, t_token *new);
@@ -84,13 +102,15 @@ void	ft_lstdelone(t_token *lst);
 void	ft_lstclear(t_token **lst);
 char	**build_arg_array(t_token *tokens);
 int		str_in_arr(char *s, char *arr[]);
-void	handle_echo(t_token *tokens);
-void	handle_cd(t_token *tokens, char **envp);
+void	handle_echo(t_cmd *cmds);
+void	handle_cd(char **argv, char **envp);
 void	handle_pwd();
-void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp);
-void	handle_history(t_token *tokens);
+void	handle_type(t_cmd *cmds, char *builtin_cmds[], char **envp);
+void	handle_history(t_cmd *cmds);
 int		is_number(const char *nptr);
-int		handle_exit(t_token **tokens, int *exit_code, char **line);
-int		handle_builtins(t_token *tokens, char *builtin_cmds[], char **envp);
+int		handle_exit(char **argv, int *exit_code);
+int		handle_builtins(t_cmd *cmds, char *builtin_cmds[], char **envp);
+int		handle_special_builtins(t_cmd *cmds, int *exit_code, char **envp);
+void	t_cmd_clear(t_cmd **lst);
 
 #endif // SHELL_H
