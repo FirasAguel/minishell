@@ -55,19 +55,29 @@ int	handle_exit(char **argv, int *exit_code)
 		return (ft_puterr("exit: numeric argument is required\n"), 0);
 }
 
-// TODO: option -n
-void	handle_echo(t_cmd *cmds)
+void	handle_echo(t_cmd *cmd)
 {
 	int	i;
+	int	new_line_flag;
 
-	if (cmds->argv[1])
+	new_line_flag = 1;
+	i = 1;
+	if (cmd->argv[i])
 	{
-		printf("%s", cmds->argv[1]);
-		i = 2;
-		while (cmds->argv[i])
-			printf(" %s", cmds->argv[i++]);
+		while (cmd->argv[i] && !strcmp(cmd->argv[i], "-n"))
+		{
+			new_line_flag = 0;
+			i++;
+		}
+		if (cmd->argv[i])
+		{
+			printf("%s", cmd->argv[i++]);
+			while (cmd->argv[i])
+				printf(" %s", cmd->argv[i++]);
+		}
 	}
-	printf("\n");
+	if (new_line_flag)
+		printf("\n");
 }
 
 void	handle_cd(char **argv, char **envp)
