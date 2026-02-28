@@ -20,19 +20,17 @@ char *ft_strjoin_path(char const *dir, char const *cmd)
   return (str);
 }
 
-// TODO: handle_relative_path
-// char	*handle_relative_path(const char *cmd)
-// {
-// 	char	*cmd_escaped_str;
+char	*handle_relative_path(const char *cmd)
+{
+	char	*cmd_escaped_str;
 
-// 	cmd_escaped_str = ft_strndup(cmd, ft_strlen(cmd));
-// 	// ft_printf("%s\t%s\n", cmd, cmd_escaped_str);
-// 	if (access(cmd_escaped_str, F_OK) != 0)
-// 		return (perror(cmd_escaped_str), free(cmd_escaped_str), NULL);	// No such file
-// 	else if (access(cmd_escaped_str, X_OK) != 0)
-// 		return (perror(cmd), free(cmd_escaped_str), NULL);
-// 	return (cmd_escaped_str);
-// }
+	cmd_escaped_str = ft_strndup(cmd, ft_strlen(cmd));
+	if (access(cmd_escaped_str, F_OK) != 0)
+		return (perror(cmd_escaped_str), free(cmd_escaped_str), NULL);	// No such file
+	else if (access(cmd_escaped_str, X_OK) != 0)
+		return (perror(cmd), free(cmd_escaped_str), NULL);
+	return (cmd_escaped_str);
+}
 
 char **get_path_split_arr(char *envp[])
 {
@@ -59,8 +57,8 @@ char *resolve_path(const char *cmd, char *envp[])
 
   if (!cmd || !cmd[0])
     return (/*ft_puterr("NULL or empty cmd str.\n"),*/ NULL);
-  // if (ft_strchr(cmd, PATH_SEP))
-  // 	return (handle_relative_path(cmd));
+  if (strchr(cmd, PATH_SEP))
+  	return (handle_relative_path(cmd));
   dirs = get_path_split_arr(envp);
   success = 0;
   i = -1;
@@ -99,8 +97,10 @@ void exec_cmd(char **argv, char **envp)
     exit(CMD_NOT_FOUND);
   }
   execve(cmd_path, argv, envp);
+  if (errno == ENOEXEC)
+    execve("/bin/sh", (char*[]){"sh", cmd_path, NULL}, envp);
   free_char_arr(argv);
-  perror("execve");
+  perror(argv[0]);
   free(cmd_path);
   exit(EXIT_FAILURE);
 }

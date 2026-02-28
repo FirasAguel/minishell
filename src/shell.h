@@ -9,6 +9,7 @@
 # include <sys/wait.h>
 # include <limits.h>
 # include <readline/history.h>
+# include <errno.h>
 
 # ifdef _WIN32
     #define ENV_PATH_SEP ';'
