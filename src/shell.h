@@ -89,5 +89,7 @@ void	handle_cd(t_token *tokens, char **envp);
 void	handle_pwd();
 void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp);
 void	handle_history(t_token *tokens);
+int		is_number(const char *nptr);
+int		handle_exit(t_token **tokens, int *exit_code, char **line);
 
 #endif // SHELL_H

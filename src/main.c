@@ -49,6 +49,7 @@ int main(int argc, char *argv[], char *envp[])
   t_token *tokens;
   t_token *ptr;
   char **builtin_cmds;
+  int exit_code;
 
   // printf("path_max %d\n", PATH_MAX);
   // printf("home dir %s\n", get_home_dir(envp));
@@ -62,6 +63,7 @@ int main(int argc, char *argv[], char *envp[])
   //     printf("%s\n", tokens[i]);
   // }
 
+  exit_code = EXIT_SUCCESS;
   init_builtin_cmd_arr(&builtin_cmds);
   while (1)
   {
@@ -89,10 +91,9 @@ int main(int argc, char *argv[], char *envp[])
     // }
 
     // TODO: implement handle_builtins instead of the if(!strcmp) else tree
-    // TODO: add exit status e.g. exit 42
-    if (!strcmp(tokens->value, "exit"))
-      return (free(line), ft_lstclear(&tokens), free_char_arr(builtin_cmds), 0);
-    if (!strcmp(tokens->value, "echo"))
+    if (handle_exit(&tokens, &exit_code, &line))
+      break ;
+    else if (!strcmp(tokens->value, "echo"))
       handle_echo(tokens);
     else if (!strcmp(tokens->value, "type"))
       handle_type(tokens, builtin_cmds, envp);
@@ -117,5 +118,5 @@ int main(int argc, char *argv[], char *envp[])
     ft_lstclear(&tokens);
   }
   free_char_arr(builtin_cmds);
-  return 0;
+  return (exit_code);
 }

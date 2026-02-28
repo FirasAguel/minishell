@@ -12,6 +12,30 @@
 // 	...
 // }
 
+int	handle_exit(t_token **tokens, int *exit_code, char **line)
+{
+	if (strcmp((*tokens)->value, "exit"))
+		return (0);
+	if (!(*tokens)->next)
+	{
+		free(*line);
+		ft_lstclear(tokens);
+		*exit_code = 0;
+		return (1);
+	}
+	if ((*tokens)->next->next)
+		return (ft_puterr("exit: too many arguments\n"), 0);
+	if (is_number((*tokens)->next->value))
+	{
+		free(*line);
+		*exit_code = atoi((*tokens)->next->value) % 256;
+		ft_lstclear(tokens);
+		return (1);
+	}
+	else
+		return (ft_puterr("exit: numeric argument is required\n"), 0);
+}
+
 void	handle_echo(t_token *tokens)
 {
 	t_token	*ptr;
@@ -92,7 +116,7 @@ void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp)
 	}
 }
 
-int	is_positive_number(const char *nptr)
+int	is_number(const char *nptr)
 {
 	int	l;
 	int	digits;
@@ -109,6 +133,11 @@ int	is_positive_number(const char *nptr)
 		return (l);
 	else
 		return (0);
+}
+
+int	is_positive_number(const char *nptr)
+{
+	return (nptr[0] != '-' && is_number(nptr));
 }
 
 // not required and not allowd for minishell
