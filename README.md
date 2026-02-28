@@ -15,7 +15,7 @@ cd, pwd, echo and more.
 - [ ] parsing
 - [ ] redirection
 - [ ] piping
-- [ ] history
+- [x] history
 
 # Architecture
 
