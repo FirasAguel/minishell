@@ -48,7 +48,10 @@ void append_to_token(char c, t_lexer *lexer)
       lexer->escape_flag = 0;
     }
     else
+    {
       lexer->buff[lexer->buff_i++] = '\\';
+      lexer->buff[lexer->buff_i++] = c;
+    }
     lexer->escape_flag = 0;
   }
   else if ((lexer->mode == MODE_NORMAL || lexer->mode == MODE_DOUBLE_QUOTE) && c == '\\')
