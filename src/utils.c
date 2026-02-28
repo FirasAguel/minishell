@@ -1,5 +1,10 @@
 #include "shell.h"
 
+void ft_puterr(char *s)
+{
+  write(2, s, ft_strlen(s));
+}
+
 size_t	ft_strlen(const char *s)
 {
 	size_t	i;
@@ -89,4 +94,23 @@ int	str_in_arr(char *s, char *arr[])
 		i++;
 	}
 	return (0);
+}
+
+int	is_number(const char *nptr)
+{
+	int	l;
+	int	digits;
+
+	if (!nptr || !*nptr)
+		return (0);
+	l = 0;
+	if (nptr[l] && nptr[l] == '+')
+		l++;
+	digits = 0;
+	while (nptr[l] && nptr[l] >= '0' && nptr[l] <= '9' && ++digits)
+		l++;
+	if (nptr[l] == '\0' && digits > 0)
+		return (l);
+	else
+		return (0);
 }

@@ -1,10 +1,5 @@
 #include "shell.h"
 
-void ft_puterr(char *s)
-{
-  write(2, s, ft_strlen(s));
-}
-
 // TODO: pre-build for each command during parsing instead
 char  **build_arg_array(t_token *tokens)
 {
@@ -68,6 +63,7 @@ int main(int argc, char *argv[], char *envp[])
   while (1)
   {
     // Flush after every printf
+    // not required for ft_printf since it uses write and no buffer
     setbuf(stdout, NULL);
 
     line = readline("$ ");

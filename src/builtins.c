@@ -25,7 +25,7 @@ int	handle_exit(t_token **tokens, int *exit_code, char **line)
 	{
 		free(*line);
 		ft_lstclear(tokens);
-		*exit_code = 0;
+		*exit_code = EXIT_SUCCESS;
 		return (1);
 	}
 	if ((*tokens)->next->next)
@@ -121,31 +121,12 @@ void	handle_type(t_token *tokens, char *builtin_cmds[], char **envp)
 	}
 }
 
-int	is_number(const char *nptr)
-{
-	int	l;
-	int	digits;
-
-	if (!nptr || !*nptr)
-		return (0);
-	l = 0;
-	if (nptr[l] && nptr[l] == '+')
-		l++;
-	digits = 0;
-	while (nptr[l] && nptr[l] >= '0' && nptr[l] <= '9' && ++digits)
-		l++;
-	if (nptr[l] == '\0' && digits > 0)
-		return (l);
-	else
-		return (0);
-}
-
 int	is_positive_number(const char *nptr)
 {
 	return (nptr[0] != '-' && is_number(nptr));
 }
 
-// not required and not allowd for minishell
+// not required and not allowed for minishell
 void	handle_history(t_token *tokens)
 {
 	HISTORY_STATE *history_state;
