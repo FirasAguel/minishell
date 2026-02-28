@@ -217,11 +217,9 @@ int	handle_input(char **line, t_cmd	**cmds)
 	// not required for ft_printf since it uses write and no buffer
 	setbuf(stdout, NULL);
 	*line = readline("$ ");
+	// TODO: handle EOF (CTRL-D etc)
 	if (!*line || !**line)
-	{
-		ft_puterr("input is null\n");
 		return (0);
-	}
 	add_history(*line);
 	tokens = lex(*line);
 	if (!tokens)
