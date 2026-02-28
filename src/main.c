@@ -146,24 +146,37 @@ void	print_t_cmd(t_cmd *cmds)
 	}
 }
 
-void	close_fds(t_std_fds std_fds)
+void	close_fds_if(t_std_fds std_fds)
 {
-	close(std_fds.in);
-	close(std_fds.out);
-	close(std_fds.err);
+  if (std_fds.in != STDIN_FILENO)
+    close(std_fds.in);
+  if (std_fds.out != STDOUT_FILENO)
+    close(std_fds.out);
+  if (std_fds.err != STDERR_FILENO)
+    close(std_fds.err);
 }
 
-void	rewire_fds(t_std_fds new_fds)
+void	delegate_to_child(t_std_fds new_fds, t_cmd *cmd, char **builtin_cmds, char **envp)
 {
 	dup2(new_fds.in, STDIN_FILENO);
 	dup2(new_fds.out, STDOUT_FILENO);
 	dup2(new_fds.err, STDERR_FILENO);
+  if (handle_builtins(cmd, builtin_cmds, envp))
+    exit (0);
+  exec_cmd(cmd->argv, envp);
 }
-void	delegate_to_child(t_std_fds new_fds, char **argv, char **envp)
+
+int  new_pipe(t_std_fds	*fds, int *next_in)
 {
-  rewire_fds(new_fds);
-  // ft_printf_fd(2, "executing %s with fds %d %d %d\n", argv[0], new_fds.in, new_fds.out, new_fds.err);
-	exec_cmd(argv, envp);
+	int	pipefd[2];
+
+  pipefd[0] = -1;
+  pipefd[1] = -1;
+  if (pipe(pipefd) == -1)
+    return (perror("handle_cmds; pipe failed:"), 0);
+  *fds = (t_std_fds){*next_in, pipefd[1], STDERR_FILENO};
+  *next_in = pipefd[0];
+  return (1);
 }
 
 int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
@@ -171,39 +184,24 @@ int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
   t_cmd			*cmd;
   pid_t			pid;
   t_std_fds	fds;
-	int				pipefd[2];
   int       next_in;
 
-  fds = (t_std_fds){0 , 1, 2};
+  fds = (t_std_fds){0, 1, 2};
   cmd = cmds;
   next_in = STDIN_FILENO;
-  pipefd[0] = pipefd[1] = -1;
   while (cmd)
   {
-    if (cmd->next)
-    {
-      if (pipe(pipefd) == -1)
-        return (perror("handle_cmds; pipe failed:"), 0);
-      fds = (t_std_fds){next_in, pipefd[1], STDERR_FILENO};
-      next_in = pipefd[0];
-    }
-    else
+    if (cmd->next && !new_pipe(&fds, &next_in))
+        return (0);
+    if (!cmd->next)
       fds = (t_std_fds){next_in, STDOUT_FILENO, STDERR_FILENO};
     pid = fork();
     if (pid < 0) // Error handling
       return (ft_puterr("handle_cmds: fork failed\n"), 0);
     else if (pid == 0)
-    {
-      rewire_fds(fds);
-      if (handle_builtins(cmd, builtin_cmds, envp))
-        exit (0);
-      exec_cmd(cmd->argv, envp);
-    }
+      delegate_to_child(fds, cmd, builtin_cmds, envp);
     // else here is unnecessary because both branches above exit this scope
-    if (fds.in != STDIN_FILENO)
-      close(fds.in);
-    if (fds.out != STDOUT_FILENO)
-      close(fds.out);
+    close_fds_if(fds);
     cmd = cmd->next;
   }
   while (waitpid(-1, NULL, 0) > 0)
