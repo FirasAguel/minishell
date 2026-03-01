@@ -1,8 +1,8 @@
 #include "shell.h"
 
-void ft_puterr(char *s)
+void	ft_puterr(char *s)
 {
-  write(2, s, ft_strlen(s));
+	write(2, s, ft_strlen(s));
 }
 
 size_t	ft_strlen(const char *s)
@@ -87,9 +87,9 @@ int	str_in_arr(char *s, char *arr[])
 	if (!arr)
 		return (0);
 	i = 0;
-	while(arr[i])
+	while (arr[i])
 	{
-		if(!strcmp(s, arr[i]))
+		if (!strcmp(s, arr[i]))
 			return (1);
 		i++;
 	}

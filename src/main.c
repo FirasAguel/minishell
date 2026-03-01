@@ -4,7 +4,7 @@ void	t_cmd_delone(t_cmd *lst)
 {
 	if (!lst)
 		return ;
-  free_char_arr(lst->argv);
+	free_char_arr(lst->argv);
 	free(lst);
 	return ;
 }
@@ -27,268 +27,270 @@ void	t_cmd_clear(t_cmd **lst)
 	return ;
 }
 
-t_cmd *t_cmd_new()
+t_cmd	*t_cmd_new(void)
 {
-  t_cmd *cmd;
+	t_cmd	*cmd;
 
-  cmd = (t_cmd *)malloc(sizeof(t_cmd));
-  if (!cmd)
-    return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
-  cmd->argv = NULL;
-  cmd->in = STDIN_FILENO;
-  cmd->out = STDOUT_FILENO;
-  cmd->err = STDERR_FILENO;
-  cmd->redirs = NULL;
-  cmd->next = NULL;
-  return (cmd);
+	cmd = (t_cmd *)malloc(sizeof(t_cmd));
+	if (!cmd)
+		return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
+	cmd->argv = NULL;
+	cmd->in = STDIN_FILENO;
+	cmd->out = STDOUT_FILENO;
+	cmd->err = STDERR_FILENO;
+	cmd->redirs = NULL;
+	cmd->next = NULL;
+	return (cmd);
 }
 
-void  parse_cmd_tokens(t_cmd **cmd, t_token *start, t_token *end, int argc)
+void	parse_cmd_tokens(t_cmd **cmd, t_token *start, t_token *end, int argc)
 {
-  char **argv;
-  t_token *ptr;
-  int i;
+	char	**argv;
+	t_token	*ptr;
+	int		i;
 
-  argv = (char **)malloc((argc + 1) * sizeof(char *));
-  if (!argv)
-    return (ft_puterr("generate_cmd_node: malloc fail\n"));
-  i = 0;
-  ptr = start;  // could remove this and just use start as ptr
-  while (ptr && ptr != end)
-  {
-    if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC)
-    {
-      // printf("adding redir of type %d to file %s to %p\n",ptr->type, ptr->next->value, &((*cmd)->redirs));
-      lst_redir_add_back(&((*cmd)->redirs), lst_redir_new(ptr->type, ptr->next->value));
-      ptr = ptr->next;
-    }
-    else
-      argv[i++] = strdup(ptr->value);
-    ptr = ptr->next;
-  }
-  argv[i] = NULL;
-  (*cmd)->argv = argv;
+	argv = (char **)malloc((argc + 1) * sizeof(char *));
+	if (!argv)
+		return (ft_puterr("generate_cmd_node: malloc fail\n"));
+	i = 0;
+	ptr = start; // could remove this and just use start as ptr
+	while (ptr && ptr != end)
+	{
+		if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC)
+		{
+			// printf("adding redir of type %d to file %s to %p\n",ptr->type, ptr->next->value, &((*cmd)->redirs));
+			lst_redir_add_back(&((*cmd)->redirs), lst_redir_new(ptr->type, ptr->next->value));
+			ptr = ptr->next;
+		}
+		else
+			argv[i++] = strdup(ptr->value);
+		ptr = ptr->next;
+	}
+	argv[i] = NULL;
+	(*cmd)->argv = argv;
 }
 
-t_cmd *generate_cmd_node(t_token *start, t_token *end, int argc)
+t_cmd	*generate_cmd_node(t_token *start, t_token *end, int argc)
 {
-  t_cmd *cmd;
+	t_cmd	*cmd;
 
-  cmd = t_cmd_new();
-  if (!cmd)
-    return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
-  parse_cmd_tokens(&cmd, start, end, argc);
-  return (cmd);
+	cmd = t_cmd_new();
+	if (!cmd)
+		return (ft_puterr("generate_cmd_node: malloc fail\n"), NULL);
+	parse_cmd_tokens(&cmd, start, end, argc);
+	return (cmd);
 }
 
-void append_cmd_node(t_cmd **head, t_cmd **tail, t_cmd *cmd_node)
+void	append_cmd_node(t_cmd **head, t_cmd **tail, t_cmd *cmd_node)
 {
-  if (!*head)
-  {
-    *head = cmd_node;
-    *tail = cmd_node;
-  }
-  else
-  {
-    (*tail)->next = cmd_node;
-    *tail = cmd_node;
-  }
+	if (!*head)
+	{
+		*head = cmd_node;
+		*tail = cmd_node;
+	}
+	else
+	{
+		(*tail)->next = cmd_node;
+		*tail = cmd_node;
+	}
 }
 
-t_cmd *parse(t_token *tokens)
+// TODO: refactor
+t_cmd	*parse(t_token *tokens)
 {
-  t_token *ptr;
-  t_token *start;
-  int argc;
-  t_cmd *head;
-  t_cmd *tail;
-  t_cmd *cmd_node;
+	t_token		*ptr;
+	t_token		*start;
+	int			argc;
+	t_cmd		*head;
+	t_cmd		*tail;
+	t_cmd		*cmd_node;
 
-  if (tokens->type == PIPE)
-    return (ft_puterr("parsing error: pipe at start\n"), NULL);
-  ptr = tokens;
-  start = tokens;
-  argc = 0;
-  head = NULL;
-  tail = NULL;
-  while (ptr)
-  {
-    if (ptr->type == PIPE)
-    {
-      if (!(ptr->next) || ptr->next->type == PIPE)
-        return (ft_puterr("parsing error: bad pipe\n"), NULL);
-      cmd_node = generate_cmd_node(start, ptr, argc);
-      if (!cmd_node)
-        return (ft_puterr("parsing error: cmd node generation failed\n"), NULL);
-      append_cmd_node(&head, &tail, cmd_node);
-      start = ptr->next;
-      argc = 0;
-    }
-    else
-    {
-      if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC || ptr->type == APPEND_ERR)
-      {
-        if (!ptr->next || ptr->next->type != WORD) // no append or heredoc support yet
-          return (ft_puterr("parsing error: bad redirect\n"), NULL);
-        ptr = ptr->next;
-      }
-      else
-        argc++;
-    }
-    ptr = ptr->next;
-  }
-  if (argc)
-  {
-    cmd_node = generate_cmd_node(start, ptr, argc);
-    if (!cmd_node)
-      return (ft_puterr("parsing error: cmd node generation failed\n"), NULL);
-    append_cmd_node(&head, &tail, cmd_node);
-  }
-  return (head);
+	if (tokens->type == PIPE)
+		return (ft_puterr("parsing error: pipe at start\n"), NULL);
+	ptr = tokens;
+	start = tokens;
+	argc = 0;
+	head = NULL;
+	tail = NULL;
+	while (ptr)
+	{
+		if (ptr->type == PIPE)
+		{
+			if (!(ptr->next) || ptr->next->type == PIPE)
+				return (ft_puterr("parsing error: bad pipe\n"), NULL);
+			cmd_node = generate_cmd_node(start, ptr, argc);
+			if (!cmd_node)
+				return (ft_puterr("parsing error: cmd node generation failed\n"), NULL);
+			append_cmd_node(&head, &tail, cmd_node);
+			start = ptr->next;
+			argc = 0;
+		}
+		else
+		{
+			if (ptr->type == REDIR_IN || ptr->type == REDIR_OUT || ptr->type == REDIR_ERR || ptr->type == APPEND || ptr->type == HEREDOC || ptr->type == APPEND_ERR)
+			{
+				if (!ptr->next || ptr->next->type != WORD) // no append or heredoc support yet
+					return (ft_puterr("parsing error: bad redirect\n"), NULL);
+				ptr = ptr->next;
+			}
+			else
+				argc++;
+		}
+		ptr = ptr->next;
+	}
+	if (argc)
+	{
+		cmd_node = generate_cmd_node(start, ptr, argc);
+		if (!cmd_node)
+			return (ft_puterr("parsing error: cmd node generation failed\n"), NULL);
+		append_cmd_node(&head, &tail, cmd_node);
+	}
+	return (head);
 }
 
 // TODO: add export unset env
-void init_builtin_cmd_arr(char ***builtin_cmds)
+void	init_builtin_cmd_arr(char ***builtin_cmds)
 {
-  int builtin_cmd_count;
+	int	builtin_cmd_count;
 
-  builtin_cmd_count = 6;
-  *builtin_cmds = (char **)malloc((builtin_cmd_count + 1) * sizeof(char **));
-  (*builtin_cmds)[0] = strdup("exit");
-  (*builtin_cmds)[1] = strdup("echo");
-  (*builtin_cmds)[2] = strdup("type");
-  (*builtin_cmds)[3] = strdup("pwd");
-  (*builtin_cmds)[4] = strdup("cd");
-  (*builtin_cmds)[5] = strdup("history");
-  (*builtin_cmds)[6] = NULL;
+	builtin_cmd_count = 6;
+	*builtin_cmds = (char **)malloc((builtin_cmd_count + 1) * sizeof(char **));
+	(*builtin_cmds)[0] = strdup("exit");
+	(*builtin_cmds)[1] = strdup("echo");
+	(*builtin_cmds)[2] = strdup("type");
+	(*builtin_cmds)[3] = strdup("pwd");
+	(*builtin_cmds)[4] = strdup("cd");
+	(*builtin_cmds)[5] = strdup("history");
+	(*builtin_cmds)[6] = NULL;
 }
+
 void	print_t_cmd(t_cmd *cmd)
 {
-  int i;
+	int		i;
 	t_redir	*redir;
 
-  while (cmd)
+	while (cmd)
 	{
-    printf("%s", cmd->argv[0]);
-    i = 1;
-    while (cmd->argv[i])
+		printf("%s", cmd->argv[0]);
+		i = 1;
+		while (cmd->argv[i])
 			printf(" %s", cmd->argv[i++]);
-    printf("\n");
-    redir = cmd->redirs;
-    while (redir)
-    {
-      printf("%d %s ",redir->type, redir->file);
-      redir = redir->next;
-    }
-    printf("\n");
-    cmd = cmd->next;
+		printf("\n");
+		redir = cmd->redirs;
+		while (redir)
+		{
+			printf("%d %s ", redir->type, redir->file);
+			redir = redir->next;
+		}
+		printf("\n");
+		cmd = cmd->next;
 	}
 }
 
 void	close_fds_if(t_std_fds std_fds)
 {
-  if (std_fds.in != STDIN_FILENO)
-    close(std_fds.in);
-  if (std_fds.out != STDOUT_FILENO)
-    close(std_fds.out);
-  if (std_fds.err != STDERR_FILENO)
-    close(std_fds.err);
+	if (std_fds.in != STDIN_FILENO)
+		close(std_fds.in);
+	if (std_fds.out != STDOUT_FILENO)
+		close(std_fds.out);
+	if (std_fds.err != STDERR_FILENO)
+		close(std_fds.err);
 }
 
 void	delegate_to_child(t_std_fds new_fds, t_cmd *cmd, char **builtin_cmds, char **envp)
 {
-  t_redir *redir;
+	t_redir	*redir;
 
-  redir = cmd->redirs;
-  while (redir)
-  {
-    if (redir->type == REDIR_IN)
-    {
-      new_fds.in = open(redir->file, O_RDONLY);
-      if (new_fds.in < 0)
-        return (perror(redir->file), exit (EXIT_FAILURE));
-    }
-    else if (redir->type == REDIR_OUT)
-    {
-      new_fds.out = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      if (new_fds.out < 0)
-        return (perror(redir->file), exit (EXIT_FAILURE));
-    }
-    else if (redir->type == REDIR_ERR)
-    {
-      new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      if (new_fds.err < 0)
-        return (perror(redir->file), exit (EXIT_FAILURE));
-    }
-    else if (redir->type == APPEND)
-    {
-      new_fds.out = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
-      if (new_fds.out < 0)
-        return (perror(redir->file), exit (EXIT_FAILURE));
-    }
-    else if (redir->type == APPEND_ERR)
-    {
-      new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
-      if (new_fds.err < 0)
-        return (perror(redir->file), exit (EXIT_FAILURE));
-    }
-    redir = redir->next;
-  }
+	redir = cmd->redirs;
+	while (redir)
+	{
+		if (redir->type == REDIR_IN)
+		{
+			new_fds.in = open(redir->file, O_RDONLY);
+			if (new_fds.in < 0)
+				return (perror(redir->file), exit (EXIT_FAILURE));
+		}
+		else if (redir->type == REDIR_OUT)
+		{
+			new_fds.out = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			if (new_fds.out < 0)
+				return (perror(redir->file), exit (EXIT_FAILURE));
+		}
+		else if (redir->type == REDIR_ERR)
+		{
+			new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			if (new_fds.err < 0)
+				return (perror(redir->file), exit (EXIT_FAILURE));
+		}
+		else if (redir->type == APPEND)
+		{
+			new_fds.out = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+			if (new_fds.out < 0)
+				return (perror(redir->file), exit (EXIT_FAILURE));
+		}
+		else if (redir->type == APPEND_ERR)
+		{
+			new_fds.err = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+			if (new_fds.err < 0)
+				return (perror(redir->file), exit (EXIT_FAILURE));
+		}
+		redir = redir->next;
+	}
 	dup2(new_fds.in, STDIN_FILENO);
 	dup2(new_fds.out, STDOUT_FILENO);
 	dup2(new_fds.err, STDERR_FILENO);
-  close_fds_if(new_fds);
-  if (handle_builtins(cmd, builtin_cmds, envp))
-    exit (0);
-  exec_cmd(cmd->argv, envp);
+	close_fds_if(new_fds);
+	if (handle_builtins(cmd, builtin_cmds, envp))
+		exit (0);
+	exec_cmd(cmd->argv, envp);
 }
 
-int  new_pipe(t_std_fds	*fds, int *next_in)
+int	new_pipe(t_std_fds	*fds, int *next_in)
 {
 	int	pipefd[2];
 
-  pipefd[0] = -1;
-  pipefd[1] = -1;
-  if (pipe(pipefd) == -1)
-    return (perror("handle_cmds; pipe failed:"), 0);
-  *fds = (t_std_fds){*next_in, pipefd[1], STDERR_FILENO};
-  *next_in = pipefd[0];
-  return (1);
+	pipefd[0] = -1;
+	pipefd[1] = -1;
+	if (pipe(pipefd) == -1)
+		return (perror("handle_cmds; pipe failed:"), 0);
+	*fds = (t_std_fds){(*next_in), pipefd[1], STDERR_FILENO};
+	*next_in = pipefd[0];
+	return (1);
 }
 
-int handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
+int	handle_cmds(t_cmd *cmds, char **builtin_cmds, char **envp)
 {
-  t_cmd			*cmd;
-  pid_t			pid;
-  t_std_fds	fds;
-  int       next_in;
+	t_cmd		*cmd;
+	pid_t		pid;
+	t_std_fds	fds;
+	int			next_in;
 
-  fds = (t_std_fds){0, 1, 2};
-  cmd = cmds;
-  next_in = STDIN_FILENO;
-  while (cmd)
-  {
-    if (cmd->next && !new_pipe(&fds, &next_in))
-        return (0);
-    if (!cmd->next)
-      fds = (t_std_fds){next_in, STDOUT_FILENO, STDERR_FILENO};
-    pid = fork();
-    if (pid < 0) // Error handling
-      return (ft_puterr("handle_cmds: fork failed\n"), 0);
-    else if (pid == 0)
-      delegate_to_child(fds, cmd, builtin_cmds, envp);
-    // else here is unnecessary because both branches above exit this scope
-    close_fds_if(fds);
-    cmd = cmd->next;
-  }
-  while (waitpid(-1, NULL, 0) > 0)
-    ;
-  return (1);
+	fds = (t_std_fds){0, 1, 2};
+	cmd = cmds;
+	next_in = STDIN_FILENO;
+	while (cmd)
+	{
+		if (cmd->next && !new_pipe(&fds, &next_in))
+			return (0);
+		if (!cmd->next)
+			fds = (t_std_fds){next_in, STDOUT_FILENO, STDERR_FILENO};
+		pid = fork();
+		if (pid < 0) // Error handling
+			return (ft_puterr("handle_cmds: fork failed\n"), 0);
+		else if (pid == 0)
+			delegate_to_child(fds, cmd, builtin_cmds, envp);
+		// else here is unnecessary because both branches above exit this scope
+		close_fds_if(fds);
+		cmd = cmd->next;
+	}
+	while (waitpid(-1, NULL, 0) > 0)
+		;
+	return (1);
 }
 
 int	handle_input(char **line, t_cmd	**cmds, int exit_code)
 {
-	t_token *tokens;
+	t_token	*tokens;
 
 	// Flush after every printf
 	// not required for ft_printf since it uses write and no buffer
@@ -305,7 +307,7 @@ int	handle_input(char **line, t_cmd	**cmds, int exit_code)
 		ft_puterr("lex fail\n");
 		return (free(*line), 0);
 	}
-  // t_token *ptr = tokens;
+	// t_token *ptr = tokens;
 	*cmds = parse(tokens);
 	if (!*cmds)
 	{
@@ -313,49 +315,48 @@ int	handle_input(char **line, t_cmd	**cmds, int exit_code)
 		return (free(*line), ft_lstclear(&tokens), 0);
 	}
 	ft_lstclear(&tokens);
-  // print_t_cmd(parse(tokens));
-  // while (ptr)
-  // {
-  //   printf("%d\t%s\n", ptr->type, ptr->value);
-  //   ptr = ptr->next;
-  // }
+	// print_t_cmd(parse(tokens));
+	// while (ptr)
+	// {
+	//	 printf("%d\t%s\n", ptr->type, ptr->value);
+	//	 ptr = ptr->next;
+	// }
 	return (1);
 }
 
-int main(int argc, char *argv[], char *envp[])
+int	main(int argc, char *argv[], char *envp[])
 {
-  char *line;
-  char **builtin_cmds;
-  t_cmd		*cmds;
-  int exit_code;
+	char	*line;
+	char	**builtin_cmds;
+	t_cmd	*cmds;
+	int		exit_code;
+	int		ret;
 
-  // printf("path_max %d\n", PATH_MAX);
-  // printf("home dir %s\n", get_home_dir(envp));
-
-  // while (1)
-  // {
-  //   setbuf(stdout, NULL);
-  //   line = readline(NULL);
-  //   tokens = lex(line);
-  //   for (size_t i = 0; tokens[i]; i++)
-  //     printf("%s\n", tokens[i]);
-  // }
-
-  exit_code = EXIT_SUCCESS;
-  init_builtin_cmd_arr(&builtin_cmds);
-  while (1)
-  {
-    if (!handle_input(&line, &cmds, exit_code))
-      continue ;
-    // print_t_cmd(cmds);
-    int ret = handle_special_builtins(cmds, &exit_code, envp);
-    if (!ret)
-      handle_cmds(cmds, builtin_cmds, envp);
-    free(line);
-    t_cmd_clear(&cmds);
-    if (ret == 1)
-      break;
-  }
-  free_char_arr(builtin_cmds);
-  return (exit_code);
+	// printf("path_max %d\n", PATH_MAX);
+	// printf("home dir %s\n", get_home_dir(envp));
+	// while (1)
+	// {
+	//	 setbuf(stdout, NULL);
+	//	 line = readline(NULL);
+	//	 tokens = lex(line);
+	//	 for (size_t i = 0; tokens[i]; i++)
+	//		 printf("%s\n", tokens[i]);
+	// }
+	exit_code = EXIT_SUCCESS;
+	init_builtin_cmd_arr(&builtin_cmds);
+	while (1)
+	{
+		if (!handle_input(&line, &cmds, exit_code))
+			continue ;
+		// print_t_cmd(cmds);
+		ret = handle_special_builtins(cmds, &exit_code, envp);
+		if (!ret)
+			handle_cmds(cmds, builtin_cmds, envp);
+		free(line);
+		t_cmd_clear(&cmds);
+		if (ret == 1)
+			break ;
+	}
+	free_char_arr(builtin_cmds);
+	return (exit_code);
 }

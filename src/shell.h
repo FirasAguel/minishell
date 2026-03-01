@@ -13,74 +13,74 @@
 # include <fcntl.h>
 
 # ifdef _WIN32
-    #define ENV_PATH_SEP ';'
-    #define PATH_SEP '\\'
+#  define ENV_PATH_SEP ';'
+#  define PATH_SEP '\\'
 # else
-    #define ENV_PATH_SEP ':'
-    #define PATH_SEP '/'
+#  define ENV_PATH_SEP ':'
+#  define PATH_SEP '/'
 # endif
 
 # define CMD_NOT_FOUND 127
 
 enum e_lexing_modes
 {
-  MODE_NORMAL,
-  MODE_SINGLE_QUOTE,
-  MODE_DOUBLE_QUOTE
+	MODE_NORMAL,
+	MODE_SINGLE_QUOTE,
+	MODE_DOUBLE_QUOTE
 };
 
 enum e_token_type
 {
-  WORD,
-  PIPE,
-  REDIR_IN,
-  REDIR_OUT,
-  REDIR_ERR,
-  HEREDOC,
-  APPEND,
-  APPEND_ERR
+	WORD,
+	PIPE,
+	REDIR_IN,
+	REDIR_OUT,
+	REDIR_ERR,
+	HEREDOC,
+	APPEND,
+	APPEND_ERR
 };
 
 typedef struct s_token
 {
-  enum e_token_type type;
-  char *value;
-  struct s_token *next;
-} t_token;
+	enum e_token_type	type;
+	struct s_token		*next;
+	char				*value;
+}	t_token;
 
 typedef struct s_lexer
 {
-  enum e_lexing_modes mode;
-  t_token *tokens;
-  int token_count;
-  // TODO use append or ft_realloc
-  char buff[1024];
-  int buff_i;
-  int token_started;
-  int escape_flag;
+	enum e_lexing_modes	mode;
+	t_token				*tokens;
+	int					token_count;
+	// TODO use append or ft_realloc
+	char				buff[1024];
+	int					buff_i;
+	int					token_started;
+	int					escape_flag;
 }	t_lexer;
 
 typedef struct s_redir
 {
-  enum e_token_type type;
-  char *file;
-  void* next;
-} t_redir;
+	enum e_token_type	type;
+	char				*file;
+	void				*next;
+}	t_redir;
 typedef struct s_cmd
 {
-    t_redir  *redirs;
-    char **argv;
-    int in;
-    int out;
-    int err;
-    void* next;
-} t_cmd;
+	t_redir	*redirs;
+	char	**argv;
+	int		in;
+	int		out;
+	int		err;
+	void	*next;
+}	t_cmd;
 typedef struct s_std_fds
 {
 	int	in;
 	int	out;
 	int	err;
-} t_std_fds;
+}	t_std_fds;
 
 int		ft_printf(const char *format, ...);
 int		ft_printf_fd(int fd, const char *format, ...);
@@ -114,7 +114,7 @@ void	ft_lstclear(t_token **lst);
 int		str_in_arr(char *s, char *arr[]);
 void	handle_echo(t_cmd *cmds);
 void	handle_cd(char **argv, char **envp);
-void	handle_pwd();
+void	handle_pwd(void);
 void	handle_type(t_cmd *cmds, char *builtin_cmds[], char **envp);
 void	handle_history(t_cmd *cmds);
 int		is_number(const char *nptr);
@@ -125,7 +125,7 @@ void	t_cmd_clear(t_cmd **lst);
 void	lst_redir_add_back(t_redir **lst, t_redir *new);
 t_redir	*lst_redir_last(t_redir *lst);
 t_redir	*lst_redir_new(enum e_token_type type, char *file);
-int	lst_redir_size(t_redir *lst);
+int		lst_redir_size(t_redir *lst);
 void	lst_redir_delone(t_redir *lst);
 void	lst_redir_clear(t_redir **lst);
 

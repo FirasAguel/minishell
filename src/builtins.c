@@ -1,6 +1,6 @@
 #include "shell.h"
 
-int is_special_builtin(char *cmd_name)
+int	is_special_builtin(char *cmd_name)
 {
 	return (!strcmp(cmd_name, "exit") || !strcmp(cmd_name, "cd")
 		|| !strcmp(cmd_name, "export") || !strcmp(cmd_name, "unset"));
@@ -22,18 +22,18 @@ int	handle_special_builtins(t_cmd *cmds, int *exit_code, char **envp)
 int	handle_builtins(t_cmd *cmds, char *builtin_cmds[], char **envp)
 {
 	if (!strcmp(cmds->argv[0], "echo"))
-      return (handle_echo(cmds), 1);
-    if (!strcmp(cmds->argv[0], "type"))
-      return (handle_type(cmds, builtin_cmds, envp), 1);
-    if (!strcmp(cmds->argv[0], "pwd"))
-      return (handle_pwd(), 1);
-    if (!strcmp(cmds->argv[0], "exit"))
-      return (1);
-    if (!strcmp(cmds->argv[0], "cd"))
-      return (1);
-    // not required and not allowed for minishell
-    if (!strcmp(cmds->argv[0], "history"))
-      return (handle_history(cmds), 1);
+		return (handle_echo(cmds), 1);
+	if (!strcmp(cmds->argv[0], "type"))
+		return (handle_type(cmds, builtin_cmds, envp), 1);
+	if (!strcmp(cmds->argv[0], "pwd"))
+		return (handle_pwd(), 1);
+	if (!strcmp(cmds->argv[0], "exit"))
+		return (1);
+	if (!strcmp(cmds->argv[0], "cd"))
+		return (1);
+	// not required and not allowed for minishell
+	if (!strcmp(cmds->argv[0], "history"))
+		return (handle_history(cmds), 1);
 	return (0);
 }
 
@@ -99,7 +99,7 @@ void	handle_cd(char **argv, char **envp)
 		printf("cd: %s: No such file or directory\n", argv[1]);
 }
 
-void	handle_pwd()
+void	handle_pwd(void)
 {
 	char	*buff;
 	char	*pwd;
@@ -122,8 +122,8 @@ void	handle_pwd()
 
 void	handle_type(t_cmd *cmds, char *builtin_cmds[], char **envp)
 {
-	char *cmd_path;
-	int	i;
+	char	*cmd_path;
+	int		i;
 
 	i = 1;
 	while (cmds->argv[i])
@@ -151,18 +151,19 @@ int	is_positive_number(const char *nptr)
 // // not required and not allowed for minishell
 void	handle_history(t_cmd *cmds)
 {
-	HISTORY_STATE *history_state;
-	HIST_ENTRY **history_entries;
-	int i = 0;
-	int line_count;
+	HISTORY_STATE	*history_state;
+	HIST_ENTRY		**history_entries;
+	int				i;
+	int				line_count;
 
+	i = 0;
 	history_state = history_get_history_state();
 	history_entries = history_list();
 	if (cmds->argv[1])
 	{
 		if (cmds->argv[2])
 			return (ft_puterr("history: too many arguments\n"));
-		if(is_positive_number(cmds->argv[1]))
+		if (is_positive_number(cmds->argv[1]))
 		{
 			line_count = atoi(cmds->argv[1]);
 			i = history_state->length - line_count;
@@ -172,7 +173,7 @@ void	handle_history(t_cmd *cmds)
 	}
 	if (history_entries && history_state && history_state->length > 0)
 		for (; i < history_state->length; i++)
-			printf("%4d  %s\n", i + 1, history_entries[i]->line);
+			printf("%4d	%s\n", i + 1, history_entries[i]->line);
 	else
 		printf(" History list is empty.\n");
 }
