@@ -1,3 +1,7 @@
+# Minishell
+
+## Code crafters challenge
+
 [![progress-banner](https://backend.codecrafters.io/progress/shell/2794fc5b-9782-4a3e-b6df-0a545ea94366)](https://app.codecrafters.io/users/FirasAguel?r=2qF)
 
 This is a submission to the
@@ -7,7 +11,7 @@ In this challenge, we are building our own POSIX compliant shell that's capable 
 interpreting shell commands, running external programs and builtin commands like
 cd, pwd, echo and more.
 
-# Progress 🚀
+## Progress 🚀
 - [x] REPL
 - [x] builtin commands: `exit`, `echo`, `type`, `cd`, `pwd`, `history`
 - [x] locating executables with PATH and running programs
@@ -18,9 +22,9 @@ cd, pwd, echo and more.
 - [x] history
 - [ ] history persistence
 
-# Architecture
+## Architecture
 
-## Lexer & Tokenization
+### Lexer & Tokenization
 The lexer tokenizes the input line into a linked list using the following structs:
 ```c
 enum e_token_type
@@ -29,8 +33,10 @@ enum e_token_type
   PIPE,
   REDIR_IN,
   REDIR_OUT,
+  REDIR_ERR,
   HEREDOC,
-  APPEND
+  APPEND,
+  APPEND_ERR
 };
 
 typedef struct s_token
@@ -60,7 +66,7 @@ typedef struct s_lexer
 }	t_lexer;
 ```
 
-### examples
+#### examples
 `cat in.txt|wc -l>out.txt`
 ```mermaid
 graph LR
@@ -119,4 +125,23 @@ value = '>'"]
   F --> G["t_token
 type = WORD
 value = 'out.txt'"]
+```
+
+## parsing
+```c
+typedef struct s_redir
+{
+  enum e_token_type type;
+  char *file;
+  void* next;
+} t_redir;
+typedef struct s_cmd
+{
+    t_redir  *redirs;
+    char **argv;
+    int in;
+    int out;
+    int err;
+    void* next;
+} t_cmd;
 ```
